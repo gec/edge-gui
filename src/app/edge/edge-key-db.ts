@@ -1,5 +1,141 @@
 
 
+import {
+  DataKeyDescriptor, EndpointPath, KeyDescriptor, OutputKeyDescriptor, Path,
+  TimeSeriesValueDescriptor
+} from "./edge-model";
+import { EdgeValue, IndexableValue, SampleValue } from "./edge-data";
+import { IdDataKeyUpdate, IdKeyUpdate, SeriesUpdate, StatusType } from "./edge-consumer";
+import { isNullOrUndefined } from "util";
+
+
+
+/*
+current = { type: 'timeSeriesValue', value: v, typedValue: typedValue, time: t, date: date };
+*/
+class EdgeModelReader {
+  static seriesValueMapper(metadata: Map<Path, EdgeValue>): SeriesValueMapper | null {
+    return null;
+  }
+}
+
+interface SeriesValueMapper {
+  transform(v: SampleValue): number | boolean | string | null
+}
+/*class DefaultSeriesValueMapper implements SeriesValueMapper {
+  transform(v: SampleValue): number | boolean | string | null {
+    return v.value;
+  }
+}*/
+
+export class TimeSeriesValue {
+  constructor(
+    public readonly value: boolean | number | string,
+    public readonly date: Date,
+  ) {}
+}
+
+export class KeyState<A> {
+  constructor(
+    public readonly status: StatusType,
+    public readonly value?: A,
+  ) {}
+}
+
+export class TimeSeriesDb {
+  constructor(
+    private id: EndpointPath,
+    metadata: Map<Path, EdgeValue>,
+    desc: TimeSeriesValueDescriptor
+  ) {
+    this.processMetadata(metadata);
+  }
+
+  private status: StatusType = "PENDING";
+  private currentValue?: TimeSeriesValue = null;
+  private mapper?: SeriesValueMapper = null;
+
+  private processMetadata(metadata: Map<Path, EdgeValue>) {
+    EdgeModelReader.seriesValueMapper(metadata)
+  }
+
+  handle(update: IdDataKeyUpdate): void {
+    this.status = update.statusType;
+    if (update.statusType === "RESOLVED_VALUE" && !isNullOrUndefined(update.value)) {
+      if (update.value.constructor === SeriesUpdate) {
+        let up: SeriesUpdate = update.value as SeriesUpdate;
+        if (!isNullOrUndefined(up.descriptorUpdate)) {
+          this.processMetadata(up.descriptorUpdate.metadata);
+        }
+
+        let renderValue: boolean | number | string;
+        if (this.mapper !== null) {
+          let mapped = this.mapper.transform(up.value);
+          if (mapped !== null) {
+            renderValue = mapped;
+          } else {
+            renderValue = up.value.value;
+          }
+        } else {
+          renderValue = up.value.value;
+        }
+
+        let date = new Date(up.time);
+
+        this.currentValue = new TimeSeriesValue(renderValue, date);
+      }
+    } else {
+      this.currentValue = null;
+    }
+    console.log("Updated time series value: ");
+    console.log(this.state());
+    console.log(this.currentValue);
+  }
+
+  state(): KeyState<TimeSeriesValue> {
+    return new KeyState(this.status, this.currentValue);
+  }
+}
+
+export class EdgeKeyTable {
+  constructor(keys: Map<EndpointPath, KeyDescriptor>) {
+    keys.forEach((v, id) => {
+      if (v.constructor === DataKeyDescriptor) {
+
+        let dataKeyDesc = v as DataKeyDescriptor;
+        if (dataKeyDesc.typeDescriptor.constructor === TimeSeriesValueDescriptor) {
+          let desc = dataKeyDesc.typeDescriptor as TimeSeriesValueDescriptor;
+          let db = new TimeSeriesDb(id, dataKeyDesc.metadata, desc);
+          this.map.set(id.toStringKey(), db);
+        }
+
+      } else if (v.constructor === OutputKeyDescriptor) {
+
+      }
+    })
+  }
+
+  private map = new Map<string, TimeSeriesDb>();
+
+  handle(updates: IdKeyUpdate[]): void {
+    updates.forEach(v => {
+      if (v.constructor === IdDataKeyUpdate) {
+        let up = v as IdDataKeyUpdate;
+        let db = this.map.get(up.id.toStringKey());
+        console.log(db);
+        if (!isNullOrUndefined(db)) {
+          db.handle(up);
+        }
+      }
+    })
+  }
+
+  isActive(): boolean {
+    return this.map.size > 0;
+  }
+}
+
+
 /*
 message KeyValueUpdate {
   edge.data.Value value = 1;

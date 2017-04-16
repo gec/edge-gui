@@ -6,11 +6,11 @@ export class Path {
   constructor(public readonly part: string[]) {
   }
 
-  toKeyString(): string {
-    return Path.toKeyString(this);
+  toStringKey(): string {
+    return Path.toStringKey(this);
   }
 
-  static toKeyString(path: Path): string {
+  static toStringKey(path: Path): string {
     let result = "";
     let first = true;
     path.part.forEach(p => {
@@ -35,12 +35,18 @@ export class Path {
 export class EndpointId {
   constructor(public readonly name: Path) {
   }
+  toStringKey(): string {
+    return this.name.toStringKey();
+  }
 }
 export class EndpointPath {
   constructor(
     public readonly endpointId: EndpointId,
     public readonly key: Path,
   ) {}
+  toStringKey(): string {
+    return this.endpointId.toStringKey() + "//" + this.key.toStringKey();
+  }
 }
 
 export enum DataKeyTypes {

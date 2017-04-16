@@ -51,13 +51,13 @@ interface ServerToClientMessage {
 export class Path {
   constructor(public readonly part: string[]) {}
 
-  /!*toKeyString(): string {
+  /!*toStringKey(): string {
     let result = "";
     this.parts.forEach(p => result = result + "/" + p);
     return result;
   }*!/
 
-  static toKeyString(path: Path): String {
+  static toStringKey(path: Path): String {
     let result = "";
     let first = true;
     path.part.forEach(p => {

@@ -22,6 +22,6 @@ export class AppComponent implements OnInit {
   }
 
   toKeyString(path: Path): String {
-    return Path.toKeyString(path);
+    return Path.toStringKey(path);
   }
 }

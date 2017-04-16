@@ -10,17 +10,18 @@ import {
   TimeSeriesValueDescriptor,
   TypeDescriptor
 } from "./edge-model";
-import { ValueProvider } from "@angular/core";
 import { isNullOrUndefined } from "util";
 
 
-export enum StatusType {
+/*export enum StatusType {
   PENDING = 0,
   DATA_UNRESOLVED = 1,
   RESOLVED_ABSENT = 2,
   RESOLVED_VALUE = 3,
   DISCONNECTED = 4,
-}
+}*/
+
+export type StatusType = "PENDING" | "DATA_UNRESOLVED" | "RESOLVED_ABSENT" | "RESOLVED_VALUE" | "DISCONNECTED"
 
 enum DataKeyUpdateType {
   Series,
