@@ -23,6 +23,8 @@ import { isNullOrUndefined } from "util";
 
 export type StatusType = "PENDING" | "DATA_UNRESOLVED" | "RESOLVED_ABSENT" | "RESOLVED_VALUE" | "DISCONNECTED"
 
+export type KeyType = "Series" | "KeyValue" | "TopicEvent" | "ActiveSet";
+
 enum DataKeyUpdateType {
   Series,
   KeyValue,

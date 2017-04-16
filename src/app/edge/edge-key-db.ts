@@ -5,14 +5,11 @@ import {
   TimeSeriesValueDescriptor
 } from "./edge-model";
 import { EdgeValue, IndexableValue, SampleValue } from "./edge-data";
-import { IdDataKeyUpdate, IdKeyUpdate, SeriesUpdate, StatusType } from "./edge-consumer";
+import { IdDataKeyUpdate, IdKeyUpdate, KeyType, SeriesUpdate, StatusType } from "./edge-consumer";
 import { isNullOrUndefined } from "util";
 
 
 
-/*
-current = { type: 'timeSeriesValue', value: v, typedValue: typedValue, time: t, date: date };
-*/
 class EdgeModelReader {
   static seriesValueMapper(metadata: Map<Path, EdgeValue>): SeriesValueMapper | null {
     return null;
@@ -22,11 +19,6 @@ class EdgeModelReader {
 interface SeriesValueMapper {
   transform(v: SampleValue): number | boolean | string | null
 }
-/*class DefaultSeriesValueMapper implements SeriesValueMapper {
-  transform(v: SampleValue): number | boolean | string | null {
-    return v.value;
-  }
-}*/
 
 export class TimeSeriesValue {
   constructor(
@@ -35,16 +27,20 @@ export class TimeSeriesValue {
   ) {}
 }
 
-export class KeyState<A> {
+type KeyValue = TimeSeriesValue
+
+export class KeyState {
   constructor(
+    public readonly key: EndpointPath,
     public readonly status: StatusType,
-    public readonly value?: A,
+    public readonly keyType: KeyType,
+    public readonly value?: KeyValue,
   ) {}
 }
 
 export class TimeSeriesDb {
   constructor(
-    private id: EndpointPath,
+    private key: EndpointPath,
     metadata: Map<Path, EdgeValue>,
     desc: TimeSeriesValueDescriptor
   ) {
@@ -87,21 +83,23 @@ export class TimeSeriesDb {
     } else {
       this.currentValue = null;
     }
-    console.log("Updated time series value: ");
-    console.log(this.state());
-    console.log(this.currentValue);
+    // console.log("Updated time series value: ");
+    // console.log(this.state());
+    // console.log(this.currentValue);
   }
 
-  state(): KeyState<TimeSeriesValue> {
-    return new KeyState(this.status, this.currentValue);
+  state(): KeyState {
+    return new KeyState(this.key, this.status, "Series", this.currentValue);
   }
 }
 
 export class EdgeKeyTable {
-  constructor(keys: Map<EndpointPath, KeyDescriptor>) {
-    keys.forEach((v, id) => {
-      if (v.constructor === DataKeyDescriptor) {
 
+  constructor(keys: [EndpointPath, KeyDescriptor][]) {
+    keys.forEach(tup => {
+      let id = tup[0];
+      let v = tup[1];
+      if (v.constructor === DataKeyDescriptor) {
         let dataKeyDesc = v as DataKeyDescriptor;
         if (dataKeyDesc.typeDescriptor.constructor === TimeSeriesValueDescriptor) {
           let desc = dataKeyDesc.typeDescriptor as TimeSeriesValueDescriptor;
@@ -117,12 +115,20 @@ export class EdgeKeyTable {
 
   private map = new Map<string, TimeSeriesDb>();
 
+  snapshot(): KeyState[] {
+    let result = [];
+    this.map.forEach(v => {
+      result.push(v.state());
+    });
+    return result;
+  }
+
   handle(updates: IdKeyUpdate[]): void {
     updates.forEach(v => {
       if (v.constructor === IdDataKeyUpdate) {
         let up = v as IdDataKeyUpdate;
         let db = this.map.get(up.id.toStringKey());
-        console.log(db);
+        //console.log(db);
         if (!isNullOrUndefined(db)) {
           db.handle(up);
         }

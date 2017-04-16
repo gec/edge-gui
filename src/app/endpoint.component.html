@@ -1,1 +1,7 @@
 <p>endpoint component</p>
+
+<ul>
+  <li *ngFor="let state of series">
+    {{state.key.toStringKey()}}
+  </li>
+</ul>
