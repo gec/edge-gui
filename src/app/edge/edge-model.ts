@@ -1,5 +1,5 @@
 
-import { EdgeValue, EdgeValueProtoParser, IndexableValue } from "./edge-data";
+import { EdgeValue, EdgeDataParser, IndexableValue } from "./edge-data";
 
 
 export class Path {
@@ -37,31 +37,62 @@ export class EndpointId {
   }
 }
 export class EndpointPath {
-  endpointId: EndpointId;
-  key: Path;
+  constructor(
+    public readonly endpointId: EndpointId,
+    public readonly key: Path,
+  ) {}
 }
 
-enum DataKeyTypes {
+export enum DataKeyTypes {
   LatestKeyValue,
   TimeSeriesValue,
   EventTopicValue,
   ActiveSetValue,
 }
 
+/*export interface TypeDescriptor {
+  getKind(): DataKeyTypes;
+}
+
+export class LatestKeyValueDescriptor implements TypeDescriptor {
+  kind: "LatestKeyValue";
+  getKind() { return DataKeyTypes.LatestKeyValue; }
+  constructor() {}
+}
+export class TimeSeriesValueDescriptor implements TypeDescriptor {
+  kind: "TimeSeriesValue";
+  getKind() { return DataKeyTypes.TimeSeriesValue; }
+  //kind: DataKeyTypes.TimeSeriesValue;
+  constructor() {}
+}
+export class EventTopicValueDescriptor implements TypeDescriptor {
+  kind: "EventTopicValue";
+  getKind() { return DataKeyTypes.EventTopicValue; }
+  //kind: DataKeyTypes.EventTopicValue;
+  constructor() {}
+}
+export class ActiveSetValueDescriptor implements TypeDescriptor {
+  kind: "ActiveSetValue";
+  getKind() { return DataKeyTypes.ActiveSetValue; }
+  //kind: DataKeyTypes.ActiveSetValue;
+  constructor() {}
+}*/
+
+
 export class LatestKeyValueDescriptor {
-  kind: DataKeyTypes.LatestKeyValue;
+  //kind: "LatestKeyValue";
   constructor() {}
 }
 export class TimeSeriesValueDescriptor {
-  kind: DataKeyTypes.TimeSeriesValue;
+  //kind: "TimeSeriesValue";
   constructor() {}
 }
 export class EventTopicValueDescriptor {
-  kind: DataKeyTypes.EventTopicValue;
+  //kind: "EventTopicValue";
   constructor() {}
 }
 export class ActiveSetValueDescriptor {
-  kind: DataKeyTypes.ActiveSetValue;
+  //kind: "ActiveSetValue";
   constructor() {}
 }
 
@@ -100,7 +131,7 @@ export class IndexSpecifier {
 }
 
 
-export class ProtoJsonModelParser {
+export class EdgeModelParser {
 
   static parsePath(pjson: any): Path | null {
     if (pjson.part && pjson.part instanceof Array) {
@@ -115,6 +146,33 @@ export class ProtoJsonModelParser {
 
       if (result !== null) {
         return new Path(result);
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
+  }
+
+  static parseEndpointId(pjson: any): EndpointId {
+    if (pjson.name) {
+      let path = this.parsePath(pjson.name);
+      if (path) {
+        return new EndpointId(path);
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
+  }
+
+  static parseEndpointPath(pjson: any): EndpointPath {
+    if (pjson.endpointId && pjson.key) {
+      let id = this.parseEndpointId(pjson.endpointId);
+      let key = this.parsePath(pjson.key);
+      if (id && key) {
+        return new EndpointPath(id, key);
       } else {
         return null;
       }
@@ -141,12 +199,12 @@ export class ProtoJsonModelParser {
 
     let indexMap = new Map<Path, IndexableValue>();
     if (pjson.indexes) {
-      indexMap = ProtoJsonModelParser.parsePathMap(pjson.indexes, EdgeValueProtoParser.parseIndexableValue);
+      indexMap = EdgeModelParser.parsePathMap(pjson.indexes, EdgeDataParser.parseIndexableValue);
     }
 
     let metadataMap = new Map<Path, EdgeValue>();
     if (pjson.metadata) {
-      metadataMap = ProtoJsonModelParser.parsePathMap(pjson.metadata, EdgeValueProtoParser.parseValue);
+      metadataMap = EdgeModelParser.parsePathMap(pjson.metadata, EdgeDataParser.parseValue);
     }
 
     let desc: TypeDescriptor;
@@ -167,12 +225,12 @@ export class ProtoJsonModelParser {
 
     let indexMap = new Map<Path, IndexableValue>();
     if (pjson.indexes) {
-      indexMap = ProtoJsonModelParser.parsePathMap(pjson.indexes, EdgeValueProtoParser.parseIndexableValue);
+      indexMap = EdgeModelParser.parsePathMap(pjson.indexes, EdgeDataParser.parseIndexableValue);
     }
 
     let metadataMap = new Map<Path, EdgeValue>();
     if (pjson.metadata) {
-      metadataMap = ProtoJsonModelParser.parsePathMap(pjson.metadata, EdgeValueProtoParser.parseValue);
+      metadataMap = EdgeModelParser.parsePathMap(pjson.metadata, EdgeDataParser.parseValue);
     }
 
     return new OutputKeyDescriptor(indexMap, metadataMap);
@@ -181,22 +239,22 @@ export class ProtoJsonModelParser {
 
     let indexMap = new Map<Path, IndexableValue>();
     if (pjson.indexes) {
-      indexMap = ProtoJsonModelParser.parsePathMap(pjson.indexes, EdgeValueProtoParser.parseIndexableValue);
+      indexMap = EdgeModelParser.parsePathMap(pjson.indexes, EdgeDataParser.parseIndexableValue);
     }
 
     let metadataMap = new Map<Path, EdgeValue>();
     if (pjson.metadata) {
-      metadataMap = ProtoJsonModelParser.parsePathMap(pjson.metadata, EdgeValueProtoParser.parseValue);
+      metadataMap = EdgeModelParser.parsePathMap(pjson.metadata, EdgeDataParser.parseValue);
     }
 
     let dataKeySet = new Map<Path, DataKeyDescriptor>();
     if (pjson.dataKeySet) {
-      dataKeySet = ProtoJsonModelParser.parsePathMap(pjson.dataKeySet, this.parseDataKeyDescriptor);
+      dataKeySet = EdgeModelParser.parsePathMap(pjson.dataKeySet, this.parseDataKeyDescriptor);
     }
 
     let outputKeySet = new Map<Path, OutputKeyDescriptor>();
     if (pjson.outputKeySet) {
-      outputKeySet = ProtoJsonModelParser.parsePathMap(pjson.outputKeySet, this.parseOutputKeyDescriptor);
+      outputKeySet = EdgeModelParser.parsePathMap(pjson.outputKeySet, this.parseOutputKeyDescriptor);
     }
 
     return new EndpointDescriptor(indexMap, metadataMap, dataKeySet, outputKeySet);

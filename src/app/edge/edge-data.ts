@@ -1,4 +1,6 @@
 
+import { isNullOrUndefined } from "util";
+
 export interface NumericValue {
   readonly value: number
 }
@@ -47,31 +49,31 @@ export type IndexableValue = SInt32Value | UInt32Value | SInt64Value | UInt64Val
 export type SampleValue = FloatValue | DoubleValue | SInt32Value | UInt32Value | SInt64Value | UInt64Value | BoolValue
 
 
-export class EdgeValueProtoParser {
+export class EdgeDataParser {
 
   static parseNum<A>(v: any, f: (parsed: number) => A): A | null {
-    if (v && typeof v === "number") {
+    if (!isNullOrUndefined(v) && typeof v === "number") {
       return f(v);
     } else {
       return null;
     }
   }
   static parseString<A>(v: any, f: (parsed: string) => A): A | null {
-    if (v && typeof v === "string") {
+    if (!isNullOrUndefined(v) && typeof v === "string") {
       return f(v);
     } else {
       return null;
     }
   }
   static parseBool<A>(v: any, f: (parsed: boolean) => A): A | null {
-    if (v && typeof v === "boolean") {
+    if (!isNullOrUndefined(v) && typeof v === "boolean") {
       return f(v);
     } else {
       return null;
     }
   }
   static parseList(v: any): ListValue | null {
-    if (v && v.element) {
+    if (!isNullOrUndefined(v) && v.element) {
       return null;
     } else {
       return null;
@@ -80,7 +82,7 @@ export class EdgeValueProtoParser {
 
   static parseValue(pjson: any): EdgeValue | null {
 
-    let me = EdgeValueProtoParser;
+    let me = EdgeDataParser;
 
     let result = me.parseString(pjson.stringValue, v => new StringValue(v)) ||
       me.parseNum(pjson.sint32Value, v => new SInt32Value(v)) ||
@@ -98,7 +100,7 @@ export class EdgeValueProtoParser {
 
   static parseIndexableValue(pjson: any): IndexableValue | null {
 
-    let me = EdgeValueProtoParser;
+    let me = EdgeDataParser;
 
     let result = me.parseString(pjson.stringValue, v => new StringValue(v)) ||
       me.parseNum(pjson.sint32Value, v => new SInt32Value(v)) ||
@@ -111,17 +113,18 @@ export class EdgeValueProtoParser {
     return result;
   }
 
-  static parseSampleValue(pjson: any): IndexableValue | null {
+  static parseSampleValue(pjson: any): SampleValue | null {
 
-    let me = EdgeValueProtoParser;
+    let me = EdgeDataParser;
 
-    let result = me.parseString(pjson.stringValue, v => new StringValue(v)) ||
+    let result =
       me.parseNum(pjson.sint32Value, v => new SInt32Value(v)) ||
       me.parseNum(pjson.uint32Value, v => new UInt32Value(v)) ||
       me.parseNum(pjson.sint64Value, v => new SInt64Value(v)) ||
       me.parseNum(pjson.uint64Value, v => new UInt64Value(v)) ||
-      me.parseBool(pjson.boolValue, v => new BoolValue(v)) ||
-      me.parseString(pjson.bytesValue, v => new BytesValue(v))
+      me.parseNum(pjson.floatValue, v => new FloatValue(v)) ||
+      me.parseNum(pjson.doubleValue, v => new DoubleValue(v)) ||
+      me.parseBool(pjson.boolValue, v => new BoolValue(v));
 
     return result;
   }

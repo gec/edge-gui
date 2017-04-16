@@ -2,7 +2,8 @@
 import { Injectable, OnInit } from "@angular/core";
 import { EdgeWebSocketService, IdEndpointPrefixUpdate } from "./edge/webmodule";
 import { Observable } from "rxjs/Observable";
-import { EndpointId, Path } from "./edge/edge-model";
+import { DataKeyDescriptor, EndpointDescriptor, EndpointId, OutputKeyDescriptor, Path } from "./edge/edge-model";
+import { EdgeConsumer, IdKeyUpdate } from "./edge/edge-consumer";
 
 
 @Injectable()
@@ -39,7 +40,7 @@ export class EdgeConsumerService {
     return obs;
   }
 
-  subscribeEndpointDescriptor(id: EndpointId): Observable<any> {
+  subscribeEndpointDescriptor(id: EndpointId): Observable<EndpointDescriptor> {
     this.checkStart();
 
     let obs = Observable.create(observer => {
@@ -52,6 +53,20 @@ export class EdgeConsumerService {
     return obs;
   }
 
+  subscribeEndpointKeys(id: EndpointId, descriptor: EndpointDescriptor): Observable<IdKeyUpdate[]> {
+    this.checkStart();
+
+    let params = EdgeConsumer.subscriptionParamsForKeys(id, descriptor);
+
+    let obs = Observable.create(observer => {
+      let sub = this.service.subscribeDataKeys(params, updates => {
+        observer.next(updates)
+      });
+      return () => { sub.close() };
+    });
+
+    return obs;
+  }
 
 
 }

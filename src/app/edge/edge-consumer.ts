@@ -1,7 +1,17 @@
 
 
-import { EdgeValue, IndexableValue, SampleValue } from "./edge-data";
-import { DataKeyDescriptor, EndpointPath, OutputKeyDescriptor, Path } from "./edge-model";
+import { EdgeDataParser, EdgeValue, IndexableValue, SampleValue } from "./edge-data";
+import {
+  ActiveSetValueDescriptor,
+  DataKeyDescriptor, DataKeyTypes, EdgeModelParser, EndpointDescriptor, EndpointId, EndpointPath,
+  EventTopicValueDescriptor,
+  LatestKeyValueDescriptor,
+  OutputKeyDescriptor, Path,
+  TimeSeriesValueDescriptor,
+  TypeDescriptor
+} from "./edge-model";
+import { ValueProvider } from "@angular/core";
+import { isNullOrUndefined } from "util";
 
 
 export enum StatusType {
@@ -24,7 +34,7 @@ interface DataKeyValueUpdate {
   readonly descriptorUpdate?: DataKeyDescriptor;
 }
 
-class SeriesUpdate implements DataKeyValueUpdate {
+export class SeriesUpdate implements DataKeyValueUpdate {
   constructor(
     public readonly value: SampleValue,
     public readonly time: number,
@@ -35,7 +45,7 @@ class SeriesUpdate implements DataKeyValueUpdate {
     return DataKeyUpdateType.Series;
   }
 }
-class KeyValueUpdate implements DataKeyValueUpdate {
+export class KeyValueUpdate implements DataKeyValueUpdate {
   constructor(
     public readonly value: EdgeValue,
     public readonly descriptorUpdate?: DataKeyDescriptor,
@@ -45,10 +55,10 @@ class KeyValueUpdate implements DataKeyValueUpdate {
     return DataKeyUpdateType.KeyValue;
   }
 }
-class TopicEventUpdate implements DataKeyValueUpdate {
+export class TopicEventUpdate implements DataKeyValueUpdate {
   constructor(
     public readonly topic: Path,
-    public readonly value: SampleValue,
+    public readonly value: EdgeValue,
     public readonly time: number,
     public readonly descriptorUpdate?: DataKeyDescriptor,
   ) {}
@@ -57,7 +67,7 @@ class TopicEventUpdate implements DataKeyValueUpdate {
     return DataKeyUpdateType.TopicEvent;
   }
 }
-class ActiveSetUpdate implements DataKeyValueUpdate {
+export class ActiveSetUpdate implements DataKeyValueUpdate {
   constructor(
     public readonly value: Map<IndexableValue, EdgeValue>,
     public readonly removes: IndexableValue[],
@@ -73,19 +83,34 @@ class ActiveSetUpdate implements DataKeyValueUpdate {
 
 //export type DataKeyValueUpdate = SeriesUpdate | KeyValueUpdate | TopicEventUpdate | ActiveSetUpdate
 
-class IdDataKeyUpdate {
-  constructor(
-    public readonly id: EndpointPath,
-    public readonly type: StatusType,
-    public readonly value?: DataKeyValueUpdate,
-  ) {}
+enum IdUpdateType {
+  DataKey,
+  OutputKey
 }
 
-class UUID {
+export interface IdKeyUpdate {
+  getType(): IdUpdateType
+  readonly id: EndpointPath
+  readonly statusType: StatusType
+}
+
+export class IdDataKeyUpdate implements IdKeyUpdate {
+  constructor(
+    public readonly id: EndpointPath,
+    public readonly statusType: StatusType,
+    public readonly value?: DataKeyValueUpdate,
+  ) {}
+
+  getType(): IdUpdateType {
+    return IdUpdateType.DataKey;
+  }
+}
+
+export class UUID {
   constructor(public readonly value: String) {}
 }
 
-class OutputKeyStatus {
+export class OutputKeyStatus {
   constructor(
     public readonly sequenceSession: UUID,
     public readonly sequence: number,
@@ -93,84 +118,175 @@ class OutputKeyStatus {
   ) {}
 }
 
-class OutputKeyUpdate {
+export class OutputKeyUpdate {
   constructor(
-    public readonly status_update: OutputKeyStatus,
+    public readonly statusUpdate: OutputKeyStatus,
     public readonly descriptorUpdate?: OutputKeyDescriptor,
   ) {}
 }
 
 
-class IdOutputKeyUpdate {
+export class IdOutputKeyUpdate implements IdKeyUpdate {
   constructor(
     public readonly id: EndpointPath,
-    public readonly type: StatusType,
+    public readonly statusType: StatusType,
     public readonly value?: OutputKeyUpdate,
   ) {}
-}
 
-
-/*
-message OutputKeyStatus {
-  UUID sequence_session = 1;
-  uint64 sequence = 2;
-  edge.data.Value value = 3;
-}
-
-message DataKeyValueUpdate {
-  edge.DataKeyDescriptor descriptor_update = 1;
-  oneof types {
-    KeyValueUpdate key_value_update = 2;
-    SeriesUpdate series_update = 3;
-    TopicEventUpdate topic_event_update = 4;
-    ActiveSetUpdate active_set_update = 5;
+  getType(): IdUpdateType {
+    return IdUpdateType.OutputKey;
   }
 }
 
-message OutputKeyUpdate {
-  edge.OutputKeyDescriptor descriptor_update = 1;
-  edge.OutputKeyStatus status_update = 2;
+
+export class EdgeConsumer {
+
+  static subscriptionParamsForKeys(endpointId: EndpointId, descriptor: EndpointDescriptor): any {
+
+    let series: EndpointPath[] = [];
+    let keyValues: EndpointPath[] = [];
+    let topicEvents: EndpointPath[] = [];
+    let activeSets: EndpointPath[] = [];
+
+    let outputs: EndpointPath[] = [];
+
+    descriptor.dataKeySet.forEach((desc, key: Path) => {
+      switch (desc.typeDescriptor.constructor) {
+        case TimeSeriesValueDescriptor: series.push(new EndpointPath(endpointId, key)); break;
+        case LatestKeyValueDescriptor: keyValues.push(new EndpointPath(endpointId, key)); break;
+        case EventTopicValueDescriptor: topicEvents.push(new EndpointPath(endpointId, key)); break;
+        case ActiveSetValueDescriptor: activeSets.push(new EndpointPath(endpointId, key)); break;
+      }
+    });
+    descriptor.outputKeySet.forEach((desc, key) => {
+      outputs.push(new EndpointPath(endpointId, key))
+    });
+
+
+    return {
+      data_params: {
+        series: series,
+        key_values: keyValues,
+        topic_events: topicEvents,
+        active_sets: activeSets
+      },
+      output_keys: outputs,
+    };
+  }
+
+  static parseMapKeyPairSet(pjson: any): Map<IndexableValue, EdgeValue> {
+    let result = new Map<IndexableValue, EdgeValue>();
+
+    if (!isNullOrUndefined(pjson) && pjson.forEach) {
+      pjson.forEach(v => {
+        if (!isNullOrUndefined(v.key) && !isNullOrUndefined(v.value)) {
+          let k = EdgeDataParser.parseIndexableValue(v.key);
+          let pv = EdgeDataParser.parseValue(v.value);
+          if (!isNullOrUndefined(k) && !isNullOrUndefined(pv)) {
+            result.set(k, pv);
+          }
+        }
+      })
+    }
+
+    return result;
+  }
+
+  static parseUpdateValue(pjson: any): DataKeyValueUpdate {
+
+    let desc: DataKeyDescriptor | null = null;
+    if (!isNullOrUndefined(pjson.descriptorUpdate)) {
+      desc = EdgeModelParser.parseDataKeyDescriptor(pjson.descriptorUpdate);
+    }
+
+    if (!isNullOrUndefined(pjson.seriesUpdate)) {
+      let up = pjson.seriesUpdate;
+      if (!isNullOrUndefined(up.value) && !isNullOrUndefined(up.time)) {
+        let v = EdgeDataParser.parseSampleValue(up.value);
+        let t = +up.time;
+        if (!isNullOrUndefined(v) && !isNullOrUndefined(t)) {
+          return new SeriesUpdate(v, t, desc);
+        } else {
+          return null;
+        }
+      } else {
+        return null;
+      }
+    } else if (!isNullOrUndefined(pjson.keyValueUpdate)) {
+      let up = pjson.keyValueUpdate;
+      if (!isNullOrUndefined(up.value)) {
+        let v = EdgeDataParser.parseValue(up.value);
+        if (!isNullOrUndefined(v)) {
+          return new KeyValueUpdate(v, desc);
+        } else {
+          return null;
+        }
+      } else {
+        return null;
+      }
+    } else if (!isNullOrUndefined(pjson.topicEventUpdate)) {
+      let up = pjson.topicEventUpdate;
+      if (!isNullOrUndefined(up.topic) && !isNullOrUndefined(up.value) && !isNullOrUndefined(up.time)) {
+        let topic = EdgeModelParser.parsePath(up.topic);
+        let v = EdgeDataParser.parseValue(up.value);
+        let t = +up.time;
+        if (!isNullOrUndefined(topic) && !isNullOrUndefined(v) && !isNullOrUndefined(t)) {
+          return new TopicEventUpdate(topic, v, t, desc);
+        } else {
+          return null;
+        }
+      } else {
+        return null;
+      }
+    } else if (!isNullOrUndefined(pjson.activeSetUpdate)) {
+      let up = pjson.activeSetUpdate;
+      let curr = this.parseMapKeyPairSet(up.value);
+
+      let removes: IndexableValue[] | null = []
+      if (up.removes && up.removes.forEach) {
+        up.removes.forEach(v => {
+          let result = EdgeDataParser.parseIndexableValue(v);
+          if (result) {
+            removes.push(result);
+          }
+        })
+      }
+
+      let adds = this.parseMapKeyPairSet(up.adds);
+      let modifies = this.parseMapKeyPairSet(up.modifies);
+
+      return new ActiveSetUpdate(curr, removes, adds, modifies, desc);
+    } else {
+      return null;
+    }
+  }
+
+  static parseUpdates(updates: any): IdKeyUpdate[] {
+
+    let result: IdKeyUpdate[] = [];
+
+    updates.forEach(v => {
+      if (!isNullOrUndefined(v.dataKeyUpdate)) {
+        let update = v.dataKeyUpdate;
+
+        if (!isNullOrUndefined(update.id) && !isNullOrUndefined(update.type) && typeof update.type === 'string') {
+          let id = EdgeModelParser.parseEndpointPath(update.id);
+          let type = update.type;
+          let value: DataKeyValueUpdate | null = null;
+          if (!isNullOrUndefined(update.value)) {
+            value = this.parseUpdateValue(update.value);
+          }
+          if (!isNullOrUndefined(id) && !isNullOrUndefined(type)) {
+            result.push(new IdDataKeyUpdate(id, type, value));
+          } else {
+            console.log("UPDATE PARSE FAILED: ")
+            console.log(v);
+          }
+        }
+      }
+    });
+
+    return result;
+  }
 }
 
-message IdEndpointUpdate {
-  edge.EndpointId id = 1;
-  StatusType type = 2;
-  edge.EndpointDescriptor value = 3;
-}
-message IdDataKeyUpdate {
-  edge.EndpointPath id = 1;
-  StatusType type = 2;
-  DataKeyValueUpdate value = 3;
-}
-message IdOutputKeyUpdate {
-  edge.EndpointPath id = 1;
-  StatusType type = 2;
-  OutputKeyUpdate value = 3;
-}
-
-
-message KeyValueUpdate {
-  edge.data.Value value = 1;
-}
-message SeriesUpdate {
-  edge.data.SampleValue value = 1;
-  uint64 time = 2;
-}
-message TopicEventUpdate {
-  edge.Path topic = 1;
-  edge.data.Value value = 2;
-  uint64 time = 3;
-}
-
-message MapKeyPair {
-  edge.data.IndexableValue key = 1;
-  edge.data.Value value = 2;
-}
-
-message ActiveSetUpdate {
-  repeated MapKeyPair value = 1;
-  repeated edge.data.IndexableValue removes = 2;
-  repeated MapKeyPair adds = 3;
-  repeated MapKeyPair modifies = 4;
-}
-*/

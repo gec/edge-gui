@@ -1,8 +1,8 @@
 
 import { Observable } from "rxjs/Rx";
 import { EdgeValue } from "./edge-data"
-import { EndpointDescriptor, EndpointId, Path, ProtoJsonModelParser } from "./edge-model";
-import { StatusType } from "./edge-consumer";
+import { EndpointDescriptor, EndpointId, Path, EdgeModelParser } from "./edge-model";
+import { EdgeConsumer, IdKeyUpdate, StatusType } from "./edge-consumer";
 
 
 export interface IdEndpointPrefixUpdate {
@@ -125,12 +125,26 @@ class EndpointDescSubExtractor implements SubscriptionExtractor {
       if (last.endpointUpdate) {
         let update  = last.endpointUpdate;
         if (update.value) {
-          let desc = ProtoJsonModelParser.parseEndpointDescriptor(update.value);
+          let desc = EdgeModelParser.parseEndpointDescriptor(update.value);
           if (desc) {
             this.callback(desc);
           }
         }
       }
+    }
+  }
+}
+
+class KeyUpdateExtractor implements SubscriptionExtractor {
+  constructor(
+    private callback: (updates: IdKeyUpdate[]) => void,
+  ) {}
+
+
+  handle(updates: any): void {
+    let results = EdgeConsumer.parseUpdates(updates);
+    if (results.length > 0) {
+      this.callback(results);
     }
   }
 }
@@ -214,7 +228,6 @@ export class EdgeWebSocketService {
   }
 
   subscribePrefixes(paths: Path[], callback: (updates: any) => void): EdgeSubscriptionHandle {
-    let subSeq = this.getSeq();
 
     let extractor = new EndpointPrefixSubExtractor(callback);
 
@@ -224,18 +237,10 @@ export class EdgeWebSocketService {
       }
     };
 
-    let subRecord: Subscription = { id: subSeq, params: params, extractor: extractor }
-
-    this.addSubscription(subSeq, subRecord);
-
-    return new EdgeSubscriptionHandle(() => {
-      this.removeSubscription(subSeq)
-    });
+    return this.subscribe(extractor, params);
   }
 
-
   subscribeEndpointDescriptor(id: EndpointId, callback: (updates: EndpointDescriptor) => void): EdgeSubscriptionHandle {
-    let subSeq = this.getSeq();
 
     let extractor = new EndpointDescSubExtractor(id, callback);
 
@@ -243,14 +248,16 @@ export class EdgeWebSocketService {
       descriptors: [id]
     };
 
-    let subRecord: Subscription = { id: subSeq, params: params, extractor: extractor }
-
-    this.addSubscription(subSeq, subRecord);
-
-    return new EdgeSubscriptionHandle(() => {
-      this.removeSubscription(subSeq)
-    });
+    return this.subscribe(extractor, params);
   }
+
+  subscribeDataKeys(params: any, callback: (updates: IdKeyUpdate[]) => void): EdgeSubscriptionHandle {
+
+    let extractor = new KeyUpdateExtractor(callback);
+
+    return this.subscribe(extractor, params);
+  }
+
 
   private onOpen(): void {
 
@@ -262,8 +269,8 @@ export class EdgeWebSocketService {
         subObj[key] = value.params;
       });
 
-      console.log("SUB OBJ:");
-      console.log(subObj);
+      //console.log("SUB OBJ:");
+      //console.log(subObj);
 
       let msg = {
         subscriptions_added: subObj
@@ -286,15 +293,15 @@ export class EdgeWebSocketService {
     ws.onmessage = (message) => {
 
       let json = JSON.parse(message.data);
-      console.log("JSON: " + json);
-      console.log(json);
+      //console.log("JSON: " + json);
+      //console.log(json);
 
       let parsed = json; //as ServerToClientMessage;
-      console.log("parsed: ");
-      console.log(parsed);
+      //console.log("parsed: ");
+      //console.log(parsed);
 
       for (let objKey in parsed.subscriptionNotification) {
-        console.log(objKey);
+        //console.log(objKey);
         let updateSet = parsed.subscriptionNotification[objKey];
         let subKey = +objKey;
 
