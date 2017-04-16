@@ -1,20 +1,25 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { HttpModule } from '@angular/http';
 
 import { AppComponent } from './app.component';
+import { EdgeConsumerService } from "./edge-consumer.service";
+import { AppRoutingModule } from "./app-routing.module";
+import { EndpointComponent } from "./endpoint.component";
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    EndpointComponent
   ],
   imports: [
     BrowserModule,
     FormsModule,
-    HttpModule
+    AppRoutingModule
   ],
-  providers: [],
+  providers: [
+    EdgeConsumerService
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

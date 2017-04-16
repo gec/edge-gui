@@ -1,1 +1,28 @@
-/* You can add global styles to this file, and also import other style files */
+
+body {
+  padding-top: 50px;
+}
+
+
+.navbar-brand {
+  color: #8cc63e;
+  border-bottom-width: 6px;
+  border-bottom-color: #8cc63e;
+  border-bottom-style: solid;
+}
+
+.sidebar {
+  margin-top: 40px;
+}
+
+div.value-panel {
+  margin-top: 15px;
+}
+
+div.value-panel h5 {
+  font-size: 120%;
+}
+
+div.value-panel h5 span {
+  float: right!important;
+}

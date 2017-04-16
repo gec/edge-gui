@@ -1,0 +1,485 @@
+
+import { Observable } from "rxjs/Rx";
+import { EdgeValue } from "./edge-data"
+import { EndpointDescriptor, EndpointId, Path, ProtoJsonModelParser } from "./edge-model";
+import { StatusType } from "./edge-consumer";
+
+
+export interface IdEndpointPrefixUpdate {
+  id: Path;
+  type: StatusType;
+  value: EndpointSetUpdate;
+}
+
+export interface EndpointSetUpdate {
+  value: EndpointId[];
+  removes: EndpointId[];
+  adds: EndpointId[];
+}
+/*
+export interface EndpointSetUpdate {
+  value: EndpointId[];
+  removes: EndpointId[];
+  adds: EndpointId[];
+}
+
+export interface IdEndpointUpdate {
+  id: Path;
+  type: StatusType;
+  value: any;
+}
+
+export interface IdEndpointPrefixUpdate {
+  id: Path;
+  type: StatusType;
+  value: EndpointSetUpdate;
+}
+interface IdentifiedEdgeUpdate {
+  endpointPrefixUpdate?: IdEndpointPrefixUpdate;
+}
+
+interface EdgeUpdateSet {
+  //updates: Array<Map<number, IdentifiedEdgeUpdate>>;
+  updates: IdentifiedEdgeUpdate[];
+}
+
+interface ServerToClientMessage {
+  subscriptionNotification: Map<number, EdgeUpdateSet>;
+}*/
+/*
+
+export class Path {
+  constructor(public readonly part: string[]) {}
+
+  /!*toKeyString(): string {
+    let result = "";
+    this.parts.forEach(p => result = result + "/" + p);
+    return result;
+  }*!/
+
+  static toKeyString(path: Path): String {
+    let result = "";
+    let first = true;
+    path.part.forEach(p => {
+      if (first) {
+        result = p;
+        first = false;
+      } else {
+        result = result + "/" + p
+      }
+    });
+    return result;
+  }
+
+  static fromKeyString(s: string): Path {
+    return new Path(s.split('/'))
+  }
+}
+export class EndpointId {
+  constructor(public readonly name: Path) {}
+  //name: Path;
+}
+export class EndpointPath {
+  endpointId: EndpointId;
+  key: Path;
+}
+
+
+
+*/
+
+/*
+
+
+ */
+
+interface SubscriptionExtractor {
+  handle(updates: any): void
+}
+
+class EndpointPrefixSubExtractor implements SubscriptionExtractor {
+  constructor(private callback: (updates: any) => void) {}
+
+  handle(updates: any): void {
+    console.log(updates);
+    let typedUpdates = updates.reduce((accum, v) => {
+      if (v.endpointPrefixUpdate) {
+        accum.push(v.endpointPrefixUpdate)
+      }
+      return accum;
+    }, []);
+
+    if (typedUpdates.length > 0) {
+      this.callback(typedUpdates)
+    }
+  }
+}
+
+class EndpointDescSubExtractor implements SubscriptionExtractor {
+  constructor(private id: EndpointId, private callback: (updates: EndpointDescriptor) => void) {}
+
+  handle(updates: any[]): void {
+
+    if (updates.length > 0) {
+      let last = updates[updates.length - 1];
+      if (last.endpointUpdate) {
+        let update  = last.endpointUpdate;
+        if (update.value) {
+          let desc = ProtoJsonModelParser.parseEndpointDescriptor(update.value);
+          if (desc) {
+            this.callback(desc);
+          }
+        }
+      }
+    }
+  }
+}
+
+class Subscription {
+  id: number;
+  params: any;
+  extractor: SubscriptionExtractor;
+}
+
+export class EdgeSubscriptionHandle {
+
+  constructor(private doClose: () => void) {}
+
+  close() {
+    this.doClose()
+  }
+}
+
+export class EdgeWebSocketService {
+
+  private socket: WebSocket = null;
+  private seq: number = 0;
+  private subscriptionMap = new Map<number, Subscription>();
+
+  private getSeq(): number {
+    let result = this.seq;
+    this.seq += 1;
+    return result;
+  }
+
+  constructor(private uri: string) {}
+
+  start(): void {
+    this.check();
+    Observable.interval(2000).subscribe(() => {
+      this.check();
+    })
+  }
+
+  private check(): void {
+    if (this.socket == null) {
+      this.doConnect();
+    }
+  }
+
+  private removeSubscription(id: number): void {
+    console.log("Removing sub: " + id);
+    this.subscriptionMap.delete(id);
+    if (this.socket != null) {
+      let msg = {
+        subscriptions_removed : [id]
+      };
+      this.socket.send(JSON.stringify(msg))
+    }
+  }
+
+  private addSubscription(id: number, record: Subscription): void {
+    console.log("Adding sub: " + id);
+    this.subscriptionMap.set(id, record);
+    if (this.socket != null) {
+      let subMap = {};
+      subMap[id] = record.params;
+      let msg = {
+        subscriptions_added : subMap
+      };
+      this.socket.send(JSON.stringify(msg))
+    }
+  }
+
+  private subscribe(extractor: SubscriptionExtractor, params: any): EdgeSubscriptionHandle {
+    let subSeq = this.getSeq();
+
+    let subRecord: Subscription = { id: subSeq, params: params, extractor: extractor }
+
+    this.addSubscription(subSeq, subRecord);
+
+    return new EdgeSubscriptionHandle(() => {
+      this.removeSubscription(subSeq)
+    });
+  }
+
+  subscribePrefixes(paths: Path[], callback: (updates: any) => void): EdgeSubscriptionHandle {
+    let subSeq = this.getSeq();
+
+    let extractor = new EndpointPrefixSubExtractor(callback);
+
+    let params = {
+      index_params: {
+        endpoint_prefixes: paths
+      }
+    };
+
+    let subRecord: Subscription = { id: subSeq, params: params, extractor: extractor }
+
+    this.addSubscription(subSeq, subRecord);
+
+    return new EdgeSubscriptionHandle(() => {
+      this.removeSubscription(subSeq)
+    });
+  }
+
+
+  subscribeEndpointDescriptor(id: EndpointId, callback: (updates: EndpointDescriptor) => void): EdgeSubscriptionHandle {
+    let subSeq = this.getSeq();
+
+    let extractor = new EndpointDescSubExtractor(id, callback);
+
+    let params = {
+      descriptors: [id]
+    };
+
+    let subRecord: Subscription = { id: subSeq, params: params, extractor: extractor }
+
+    this.addSubscription(subSeq, subRecord);
+
+    return new EdgeSubscriptionHandle(() => {
+      this.removeSubscription(subSeq)
+    });
+  }
+
+  private onOpen(): void {
+
+
+    if (this.subscriptionMap.size > 0) {
+      let subObj = {};
+
+      this.subscriptionMap.forEach((value, key) => {
+        subObj[key] = value.params;
+      });
+
+      console.log("SUB OBJ:");
+      console.log(subObj);
+
+      let msg = {
+        subscriptions_added: subObj
+      };
+
+      this.socket.send(JSON.stringify(msg));
+    }
+  }
+
+  private doConnect(): void {
+    let ws: WebSocket = new WebSocket(this.uri);
+
+    ws.onopen = () => {
+      console.log("Socket has been opened!");
+      this.socket = ws;
+
+      this.onOpen();
+    };
+
+    ws.onmessage = (message) => {
+
+      let json = JSON.parse(message.data);
+      console.log("JSON: " + json);
+      console.log(json);
+
+      let parsed = json; //as ServerToClientMessage;
+      console.log("parsed: ");
+      console.log(parsed);
+
+      for (let objKey in parsed.subscriptionNotification) {
+        console.log(objKey);
+        let updateSet = parsed.subscriptionNotification[objKey];
+        let subKey = +objKey;
+
+        let subRecord = this.subscriptionMap.get(subKey);
+        if (subRecord && updateSet && updateSet.updates) {
+          subRecord.extractor.handle(updateSet.updates);
+        }
+      }
+
+    };
+
+    ws.onerror = (err) => {
+      console.log("error: " + err);
+
+    };
+    ws.onclose = (ev) => {
+      console.log("onclose: " + ev);
+      this.socket = null;
+    };
+  }
+
+}
+
+/*
+
+var connectionService = function(){
+  var seq = 0;
+  var outputSeq = 0;
+  var connectionIdle = true;
+
+  var connectParams = null;
+  var socket = null;
+  var paramsMap = {};
+  var subsMap = {};
+
+  var correlationMap = {};
+  var outputQueue = [];
+
+  var nextSeq = function() {
+    var next = seq;
+    seq += 1;
+    return next;
+  };
+  var nextOutputSeq = function() {
+    var next = outputSeq;
+    outputSeq += 1;
+    return next;
+  };
+
+  //doConnect();
+
+  function check() {
+    if (connectParams != null && socket == null) {
+      doConnect();
+    }
+  }
+
+  function doConnect() {
+
+    // var wsUri = connectParams.protocol === 'https' ? 'wss' : 'ws';
+    // wsUri += '://' + connectParams.host + ':' + connectParams.port;
+    var wsUri = "ws://127.0.0.1:8080";
+    var ws = new WebSocket(wsUri + "/socket");
+    connectionIdle = false;
+
+    ws.onopen = function(){
+      console.log("Socket has been opened!");
+      console.log(ws);
+      socket = ws;
+      doOnOpen();
+    };
+
+    ws.onmessage = function(message) {
+      //console.log(message);
+
+      var json = JSON.parse(message.data);
+      //console.log(json);
+
+      var subs = json['subscriptionNotification'];
+      if (subs != null) {
+        for (var key in subs) {
+          var subObj = paramsMap[key];
+          if (subObj != null) {
+            subObj.callback(subs[key]);
+          }
+        }
+      }
+
+      var resp = json['outputResponse'];
+      if (resp != null) {
+        for (var corr in resp.results) {
+          var result = resp.results[corr];
+          var cb = correlationMap[corr];
+          if (cb != null) {
+            cb(result);
+          }
+          delete correlationMap[corr];
+        }
+      }
+
+    };
+
+    ws.onerror = function(err) {
+      console.log("error: " + err);
+
+    };
+    ws.onclose = function(ev) {
+      console.log("onclose: " + ev);
+      socket = null;
+    };
+  }
+
+  var doOnOpen = function() {
+    for (var key in paramsMap) {
+      var entry = paramsMap[key]
+      doSubscription(key, entry.params, entry.callback);
+    }
+    for (var req in outputQueue) {
+      doOutput(req.endPath, req.params, req.callback);
+    }
+  }
+
+  var doSubscription = function(key, params, callback) {
+    console.log("DOING: " + key);
+    console.log(params);
+    var subs = {};
+    subs[key] = params;
+    var msg = { subscriptions_added : subs }
+    socket.send(JSON.stringify(msg))
+  }
+
+  var onRemove = function(key) {
+    if (socket != null) {
+      var msg = {
+        subscriptions_removed: [ key ]
+      }
+      socket.send(JSON.stringify(msg))
+    }
+    delete paramsMap[key];
+  }
+
+  var doOutput = function(endPath, params, callback) {
+    var correlation = nextOutputSeq();
+    correlationMap[correlation] = callback;
+
+    var msg = {
+      outputRequests: [
+        {
+          id: endPath,
+          request: params,
+          correlation: correlation
+        }
+      ]
+    };
+
+    socket.send(JSON.stringify(msg))
+  };
+
+  return {
+    start: function(connParams) {
+      connectParams =  ;
+      connectParams.interval(check, 3000);
+      check();
+    },
+    subscribe: function(par, cb) {
+      var key = nextSeq();
+      paramsMap[key] = { params: par, callback: cb };
+      if (socket != null) {
+        doSubscription(key, par, cb)
+      }
+
+      return {
+        remove: function() {
+          onRemove(key);
+        }
+      }
+    },
+    outputRequest: function(endPath, params, callback) {
+      if (socket != null) {
+        doOutput(endPath, params, callback);
+      } else {
+        outputQueue.push({endPath: endPath, params: params, callback: callback});
+      }
+    }
+  };
+}();
+
+  */
