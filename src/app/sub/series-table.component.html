@@ -1,0 +1,21 @@
+
+<div class="table-responsive">
+<table class="table">
+  <thead>
+  <tr>
+    <th>Name</th>
+    <th style="text-align: right">Value</th>
+    <th>Unit</th>
+    <th>Time</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr *ngFor="let state of states">
+    <td><edge-path [path]="state.key.key"></edge-path></td>
+    <td style="text-align: right">{{state.value?.value}}</td>
+    <td>(unit)</td>
+    <td>{{state.value?.date | date:'HH:mm:ss yyyy-MM-dd'}}</td>
+  </tr>
+  </tbody>
+</table>
+</div>

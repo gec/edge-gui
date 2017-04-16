@@ -1,7 +1,13 @@
-<p>endpoint component</p>
-
-<ul>
-  <li *ngFor="let state of series">
-    {{state.key.toStringKey()}}
-  </li>
+<h1 class="page-header">
+    <edge-path [path]="id.name"></edge-path>
+</h1>
+<ul class="nav nav-tabs">
+  <li role="presentation" class="active"><a href="#">Data</a></li>
+  <li role="presentation"><a href="#/endpointdesc?name={{name}}">Description</a></li>
 </ul>
+
+<div *ngIf="series">
+  <h3>Time Series</h3>
+  <series-table [states]="series"></series-table>
+</div>
+
