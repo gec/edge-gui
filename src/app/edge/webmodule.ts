@@ -18,7 +18,7 @@ export interface EndpointSetUpdate {
 }
 /*
 export interface EndpointSetUpdate {
-  value: EndpointId[];
+  jsValue: EndpointId[];
   removes: EndpointId[];
   adds: EndpointId[];
 }
@@ -26,13 +26,13 @@ export interface EndpointSetUpdate {
 export interface IdEndpointUpdate {
   id: Path;
   type: StatusType;
-  value: any;
+  jsValue: any;
 }
 
 export interface IdEndpointPrefixUpdate {
   id: Path;
   type: StatusType;
-  value: EndpointSetUpdate;
+  jsValue: EndpointSetUpdate;
 }
 interface IdentifiedEdgeUpdate {
   endpointPrefixUpdate?: IdEndpointPrefixUpdate;

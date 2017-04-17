@@ -12,7 +12,7 @@
   <tbody>
   <tr *ngFor="let state of states">
     <td><edge-path [path]="state.key.key"></edge-path></td>
-    <td style="text-align: right">{{state.value?.value}}</td>
+    <td style="text-align: right">{{state.value?.jsValue}}</td>
     <td>(unit)</td>
     <td>{{state.value?.date | date:'HH:mm:ss yyyy-MM-dd'}}</td>
   </tr>

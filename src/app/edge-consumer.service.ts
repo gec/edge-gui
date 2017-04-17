@@ -3,7 +3,10 @@ import { Injectable, OnInit } from "@angular/core";
 import { EdgeWebSocketService, IdEndpointPrefixUpdate } from "./edge/webmodule";
 import { Observable } from "rxjs/Observable";
 import {
-  DataKeyDescriptor, EndpointDescriptor, EndpointId, EndpointPath, KeyDescriptor, OutputKeyDescriptor, Path,
+  ActiveSetValueDescriptor,
+  DataKeyDescriptor, EndpointDescriptor, EndpointId, EndpointPath, EventTopicValueDescriptor, KeyDescriptor,
+  LatestKeyValueDescriptor,
+  OutputKeyDescriptor, Path,
   TimeSeriesValueDescriptor
 } from "./edge/edge-model";
 import { EdgeConsumer, IdKeyUpdate } from "./edge/edge-consumer";
@@ -92,9 +95,16 @@ export class EdgeConsumerService {
         let dataKeyDesc = v as DataKeyDescriptor;
         if (dataKeyDesc.typeDescriptor.constructor === TimeSeriesValueDescriptor) {
           seriesDescs.push([endPath, dataKeyDesc]);
+        } else if (dataKeyDesc.typeDescriptor.constructor === LatestKeyValueDescriptor) {
+          keyValueDescs.push([endPath, dataKeyDesc]);
+        } else if (dataKeyDesc.typeDescriptor.constructor === EventTopicValueDescriptor) {
+          topicEventDescs.push([endPath, dataKeyDesc]);
+        } else if (dataKeyDesc.typeDescriptor.constructor === ActiveSetValueDescriptor) {
+          activeSetDescs.push([endPath, dataKeyDesc]);
         }
       } else if (v.constructor === OutputKeyDescriptor) {
-
+        let desc = v as OutputKeyDescriptor;
+        outputDescs.push([endPath, desc])
       }
     });
 
@@ -180,7 +190,7 @@ var endpointDescriptorSubscription = function(endId, handler) {
       .forEach(function(update) {
         console.log(update);
         var endId = update.id;
-        var descriptor = update.value;
+        var descriptor = update.jsValue;
         if (descriptor != null && endId != null) {
 
           descResult = endpointInfo(endId, descriptor);
@@ -193,12 +203,12 @@ var endpointDescriptorSubscription = function(endId, handler) {
               var pathStr = pathToString(elem.key);
               var db = null;
               var existing = dataMap[pathStr];
-              if (existing != null && existing.value != null) {
-                db = existing.value
+              if (existing != null && existing.jsValue != null) {
+                db = existing.jsValue
               }
 
               //var dataObject = function(endpointId, key, desc, dbParam)
-              var data = dataObject(endId, elem.key, elem.value, db);
+              var data = dataObject(endId, elem.key, elem.jsValue, db);
               dataObjects.push(data)
             });
           }
@@ -207,7 +217,7 @@ var endpointDescriptorSubscription = function(endId, handler) {
               console.log("OutELEM:");
               console.log(elem);
 
-              var output = outputObject(endId, elem.key, elem.value);
+              var output = outputObject(endId, elem.key, elem.jsValue);
               outputObjects.push(output)
             });
           }

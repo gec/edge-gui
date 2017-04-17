@@ -8,6 +8,7 @@ import { AppRoutingModule } from "./app-routing.module";
 import { EndpointComponent } from "./endpoint.component";
 import { SeriesTableComponent } from "./sub/series-table.component";
 import { EdgePathComponent } from "./item/edge-path.component";
+import { KeyValueTableComponent } from "./sub/kv-table.component";
 
 @NgModule({
   declarations: [
@@ -15,6 +16,7 @@ import { EdgePathComponent } from "./item/edge-path.component";
     EndpointComponent,
 
     SeriesTableComponent,
+    KeyValueTableComponent,
 
     EdgePathComponent,
   ],

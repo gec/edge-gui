@@ -20,6 +20,7 @@ import { KeyState } from "./edge/edge-key-db";
 export class EndpointComponent implements OnInit {
   id: EndpointId = null;
   series: KeyState[];
+  keyValues: KeyState[];
 
   constructor(private service: EdgeConsumerService,
               private route: ActivatedRoute,
@@ -39,9 +40,10 @@ export class EndpointComponent implements OnInit {
     });
 
     typed.forEach(v => {
-      console.log("GOT SERIES UPDATE:");
-      console.log(v);
+      //console.log("GOT SERIES UPDATE:");
+      //console.log(v);
       this.series = v.series;
+      this.keyValues = v.keyValues
     });
   }
 }
