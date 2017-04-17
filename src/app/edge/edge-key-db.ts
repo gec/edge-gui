@@ -1,11 +1,15 @@
 
 
 import {
-  DataKeyDescriptor, EndpointPath, KeyDescriptor, LatestKeyValueDescriptor, OutputKeyDescriptor, Path,
+  DataKeyDescriptor, EndpointPath, EventTopicValueDescriptor, KeyDescriptor, LatestKeyValueDescriptor,
+  OutputKeyDescriptor, Path,
   TimeSeriesValueDescriptor
 } from "./edge-model";
 import { EdgeValue, IndexableValue, SampleValue } from "./edge-data";
-import { IdDataKeyUpdate, IdKeyUpdate, KeyType, KeyValueUpdate, SeriesUpdate, StatusType } from "./edge-consumer";
+import {
+  IdDataKeyUpdate, IdKeyUpdate, IdOutputKeyUpdate, KeyType, KeyValueUpdate, OutputKeyStatus, SeriesUpdate, StatusType,
+  TopicEventUpdate
+} from "./edge-consumer";
 import { isNullOrUndefined } from "util";
 
 
@@ -34,8 +38,27 @@ export class KeyValueValue {
   ) {}
 }
 
+export class EventValueRecord {
+  constructor(
+    public readonly topic: Path,
+    public readonly value: EdgeValue,
+    public readonly time: Date,
+  ) {}
+}
 
-type KeyValue = TimeSeriesValue | KeyValueValue
+export class EventValueArray {
+  constructor(
+    public readonly values: EventValueRecord[],
+  ) {}
+}
+
+export class OutputStatusStateValue {
+  constructor(
+    public readonly outputStats: OutputKeyStatus,
+  ) {}
+}
+
+type KeyValue = TimeSeriesValue | KeyValueValue | EventValueArray | OutputStatusStateValue
 
 export class KeyState {
   constructor(
@@ -47,7 +70,7 @@ export class KeyState {
 }
 
 export interface KeyDb {
-  handle(update: IdDataKeyUpdate): void
+  handle(update: IdKeyUpdate): void
   state(): KeyState
 }
 
@@ -68,11 +91,12 @@ export class TimeSeriesDb implements KeyDb {
     EdgeModelReader.seriesValueMapper(metadata)
   }
 
-  handle(update: IdDataKeyUpdate): void {
+  handle(update: IdKeyUpdate): void {
     this.status = update.statusType;
-    if (update.statusType === "RESOLVED_VALUE" && !isNullOrUndefined(update.value)) {
-      if (update.value.constructor === SeriesUpdate) {
-        let up: SeriesUpdate = update.value as SeriesUpdate;
+    if (update.statusType === "RESOLVED_VALUE" && (update.constructor === IdDataKeyUpdate)) {
+      let dataUpdate = update as IdDataKeyUpdate;
+      if (!isNullOrUndefined(dataUpdate.value) && dataUpdate.value.constructor === SeriesUpdate) {
+        let up: SeriesUpdate = dataUpdate.value as SeriesUpdate;
         if (!isNullOrUndefined(up.descriptorUpdate)) {
           this.processMetadata(up.descriptorUpdate.metadata);
         }
@@ -122,11 +146,12 @@ export class KeyValueDb implements KeyDb {
     EdgeModelReader.seriesValueMapper(metadata)
   }
 
-  handle(update: IdDataKeyUpdate): void {
+  handle(update: IdKeyUpdate): void {
     this.status = update.statusType;
-    if (update.statusType === "RESOLVED_VALUE" && !isNullOrUndefined(update.value)) {
-      if (update.value.constructor === KeyValueUpdate) {
-        let up: KeyValueUpdate = update.value as KeyValueUpdate;
+    if (update.statusType === "RESOLVED_VALUE" && (update.constructor === IdDataKeyUpdate)) {
+      let dataUpdate = update as IdDataKeyUpdate;
+      if (!isNullOrUndefined(dataUpdate.value) && dataUpdate.value.constructor === KeyValueUpdate) {
+        let up: KeyValueUpdate = dataUpdate.value as KeyValueUpdate;
         if (!isNullOrUndefined(up.descriptorUpdate)) {
           this.processMetadata(up.descriptorUpdate.metadata);
         }
@@ -142,7 +167,67 @@ export class KeyValueDb implements KeyDb {
   }
 
   state(): KeyState {
-    return new KeyState(this.key, this.status, "Series", this.currentValue);
+    return new KeyState(this.key, this.status, "KeyValue", this.currentValue);
+  }
+}
+
+export class EventDb implements KeyDb {
+  constructor(
+    private key: EndpointPath,
+    metadata: Map<Path, EdgeValue>,
+    desc: TimeSeriesValueDescriptor
+  ) {}
+
+  private status: StatusType = "PENDING";
+  private buffer: EventValueRecord[] = [];
+
+  handle(update: IdKeyUpdate): void {
+    this.status = update.statusType;
+    if (update.statusType === "RESOLVED_VALUE" && (update.constructor === IdDataKeyUpdate)) {
+      let dataUpdate = update as IdDataKeyUpdate;
+      if (!isNullOrUndefined(dataUpdate.value) && dataUpdate.value.constructor === TopicEventUpdate) {
+        let up: TopicEventUpdate = dataUpdate.value as TopicEventUpdate;
+
+        let date = new Date(up.time);
+        let record = new EventValueRecord(up.topic, up.value, date);
+
+        this.buffer.push(record);
+        if (this.buffer.length > 100) {
+          this.buffer.shift();
+        }
+      }
+    }
+  }
+
+  state(): KeyState {
+    return new KeyState(this.key, this.status, "TopicEvent", new EventValueArray(this.buffer));
+  }
+}
+
+export class OutputKeyDb implements KeyDb {
+  constructor(
+    private key: EndpointPath,
+    metadata: Map<Path, EdgeValue>,
+  ) {}
+
+  private status: StatusType = "PENDING";
+  private current?: OutputStatusStateValue = null;
+
+  handle(update: IdKeyUpdate): void {
+    this.status = update.statusType;
+    if (update.statusType === "RESOLVED_VALUE" && (update.constructor === IdOutputKeyUpdate)) {
+      let outputUpdate = update as IdOutputKeyUpdate;
+
+      this.status = outputUpdate.statusType;
+
+      if (!isNullOrUndefined(outputUpdate.value)) {
+        this.current = new OutputStatusStateValue(outputUpdate.value.statusUpdate)
+      }
+    }
+  }
+
+  state(): KeyState {
+    return new KeyState(this.key, this.status, "OutputStatus", this.current);
   }
 }
 
@@ -164,10 +249,15 @@ export class EdgeKeyTable {
           let desc = dataKeyDesc.typeDescriptor as LatestKeyValueDescriptor;
           let db = new KeyValueDb(id, dataKeyDesc.metadata, desc);
           this.map.set(id.toStringKey(), db);
+        } else if (dataKeyDesc.typeDescriptor.constructor === EventTopicValueDescriptor) {
+          let desc = dataKeyDesc.typeDescriptor as EventTopicValueDescriptor;
+          let db = new EventDb(id, dataKeyDesc.metadata, desc);
+          this.map.set(id.toStringKey(), db);
         }
       } else if (v.constructor === OutputKeyDescriptor) {
-        //let dataKeyDesc = v as OutputKeyDescriptor;
-        //this.map.set(id.toStringKey(), )
+        let outputKeyDesc = v as OutputKeyDescriptor;
+        let db = new OutputKeyDb(id, outputKeyDesc.metadata);
+        this.map.set(id.toStringKey(), db)
       }
     })
   }

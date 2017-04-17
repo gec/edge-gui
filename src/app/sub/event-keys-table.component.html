@@ -1,0 +1,28 @@
+
+
+<div class="table-responsive">
+  <table class="table">
+    <tbody>
+    <tr *ngFor="let state of states">
+      <td><edge-path [path]="state.key.key"></edge-path></td>
+      <td style="text-align: right">
+        <table *ngIf="state.value?.values?.length > 0" class="table">
+          <tr>
+            <th>Topic</th>
+            <th style="text-align: right">Value</th>
+            <th style="text-align: right">Time</th>
+          </tr>
+          <tbody>
+          <tr *ngFor="let record of state.value?.values">
+            <td><edge-path [path]="record.topic"></edge-path></td>
+            <td>{{record.value}}</td>
+            <td>{{record.time | date:'HH:mm:ss yyyy-MM-dd'}}</td>
+          </tr>
+          </tbody>
+        </table>
+        <span *ngIf="!(state.value?.values?.length > 0)"><em>None</em></span>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>

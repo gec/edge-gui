@@ -21,6 +21,9 @@ export class EndpointComponent implements OnInit {
   id: EndpointId = null;
   series: KeyState[];
   keyValues: KeyState[];
+  events: KeyState[];
+  activeSets: KeyState[];
+  outputs: KeyState[];
 
   constructor(private service: EdgeConsumerService,
               private route: ActivatedRoute,
@@ -40,10 +43,11 @@ export class EndpointComponent implements OnInit {
     });
 
     typed.forEach(v => {
-      //console.log("GOT SERIES UPDATE:");
-      //console.log(v);
       this.series = v.series;
-      this.keyValues = v.keyValues
+      this.keyValues = v.keyValues;
+      this.events = v.topicEvents;
+      this.activeSets = v.activeSets;
+      this.outputs = v.outputs;
     });
   }
 }

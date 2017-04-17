@@ -137,6 +137,7 @@ export class EdgeConsumerService {
     };
 
     // TODO: subscribe by [EndpointPath, KeyDescriptor][]
+    // TODO: original, pending update
 
     return this.subscribeEndpointKeys(id, descriptor).map(v => handle(v));
 
@@ -152,8 +153,6 @@ export class EdgeConsumerService {
         return handle(keyUpdates);
       });*/
   }
-
-
 }
 
 export class TypedStates {
@@ -165,71 +164,3 @@ export class TypedStates {
     public readonly outputs: KeyState[],
   ) {}
 }
-
-/*
-
-var endpointDescriptorSubscription = function(endId, handler) {
-
-  var dataMap = {};
-
-  var infoParams = {
-    descriptors: [ endId ]
-  };
-  console.log("Subscribing descriptor: " + endId);
-  console.log(infoParams);
-  var infoSub = connectionService.subscribe(infoParams, function(msg) {
-    console.log("endpointDescriptorSubscription got info: ");
-    console.log(msg);
-
-    var dataObjects = [];
-    var outputObjects = [];
-    var descResult = null;
-
-    msg.updates.filter(function(v) { return v.endpointUpdate != null })
-      .map(function(v) { return v.endpointUpdate })
-      .forEach(function(update) {
-        console.log(update);
-        var endId = update.id;
-        var descriptor = update.jsValue;
-        if (descriptor != null && endId != null) {
-
-          descResult = endpointInfo(endId, descriptor);
-
-          if (descriptor.dataKeySet != null) {
-            descriptor.dataKeySet.forEach(function(elem) {
-              console.log("ELEM:");
-              console.log(elem);
-
-              var pathStr = pathToString(elem.key);
-              var db = null;
-              var existing = dataMap[pathStr];
-              if (existing != null && existing.jsValue != null) {
-                db = existing.jsValue
-              }
-
-              //var dataObject = function(endpointId, key, desc, dbParam)
-              var data = dataObject(endId, elem.key, elem.jsValue, db);
-              dataObjects.push(data)
-            });
-          }
-          if (descriptor.outputKeySet != null) {
-            descriptor.outputKeySet.forEach(function(elem) {
-              console.log("OutELEM:");
-              console.log(elem);
-
-              var output = outputObject(endId, elem.key, elem.jsValue);
-              outputObjects.push(output)
-            });
-          }
-        }
-      });
-
-    handler({
-      descriptor: descResult,
-      data: dataObjects,
-      output: outputObjects
-    });
-  });
-
-  return infoSub;
-};*/

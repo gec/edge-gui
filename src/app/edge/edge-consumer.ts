@@ -23,7 +23,7 @@ import { isNullOrUndefined } from "util";
 
 export type StatusType = "PENDING" | "DATA_UNRESOLVED" | "RESOLVED_ABSENT" | "RESOLVED_VALUE" | "DISCONNECTED"
 
-export type KeyType = "Series" | "KeyValue" | "TopicEvent" | "ActiveSet";
+export type KeyType = "Series" | "KeyValue" | "TopicEvent" | "ActiveSet" | "OutputStatus";
 
 enum DataKeyUpdateType {
   Series,
@@ -117,7 +117,7 @@ export class OutputKeyStatus {
   constructor(
     public readonly sequenceSession: UUID,
     public readonly sequence: number,
-    public readonly value: EdgeValue,
+    public readonly value?: EdgeValue,
   ) {}
 }
 

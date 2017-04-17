@@ -9,6 +9,7 @@ import { EndpointComponent } from "./endpoint.component";
 import { SeriesTableComponent } from "./sub/series-table.component";
 import { EdgePathComponent } from "./item/edge-path.component";
 import { KeyValueTableComponent } from "./sub/kv-table.component";
+import { EventKeysTableComponent } from "./sub/event-keys-table.component";
 
 @NgModule({
   declarations: [
@@ -17,6 +18,7 @@ import { KeyValueTableComponent } from "./sub/kv-table.component";
 
     SeriesTableComponent,
     KeyValueTableComponent,
+    EventKeysTableComponent,
 
     EdgePathComponent,
   ],

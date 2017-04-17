@@ -15,3 +15,9 @@
   <h3>Key Values</h3>
   <key-value-table [states]="keyValues"></key-value-table>
 </div>
+
+<div *ngIf="events">
+  <h3>Events</h3>
+  <event-keys-table [states]="events"></event-keys-table>
+  <!--<key-value-table [states]="keyValues"></key-value-table>-->
+</div>
