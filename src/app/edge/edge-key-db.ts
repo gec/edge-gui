@@ -2,25 +2,25 @@
 
 import {
   DataKeyDescriptor, EndpointPath, EventTopicValueDescriptor, KeyDescriptor, LatestKeyValueDescriptor,
-  OutputKeyDescriptor, Path,
+  OutputKeyDescriptor, Path, PathMap,
   TimeSeriesValueDescriptor
 } from "./edge-model";
-import { EdgeValue, IndexableValue, SampleValue } from "./edge-data";
+import { EdgeValue, SampleValue } from "./edge-data";
 import {
   IdDataKeyUpdate, IdKeyUpdate, IdOutputKeyUpdate, KeyType, KeyValueUpdate, OutputKeyStatus, SeriesUpdate, StatusType,
   TopicEventUpdate
 } from "./edge-consumer";
 import { isNullOrUndefined } from "util";
-
-
+import { EdmCore, SeriesType } from "./edge-edm-core";
 
 class EdgeModelReader {
-  static seriesValueMapper(metadata: Map<Path, EdgeValue>): SeriesValueMapper | null {
+
+  /*static seriesValueMapper(metadata: PathMap<EdgeValue>): SeriesValueMapper | null {
     return null;
-  }
+  }*/
 }
 
-interface SeriesValueMapper {
+export interface SeriesValueMapper {
   transform(v: SampleValue): number | boolean | string | null
 }
 
@@ -77,18 +77,25 @@ export interface KeyDb {
 export class TimeSeriesDb implements KeyDb {
   constructor(
     private key: EndpointPath,
-    metadata: Map<Path, EdgeValue>,
+    metadata: PathMap<EdgeValue>,
     desc: TimeSeriesValueDescriptor
   ) {
     this.processMetadata(metadata);
   }
 
   private status: StatusType = "PENDING";
+  private seriesType: SeriesType = "analog_status";
+  private unit: String = "";
   private currentValue?: TimeSeriesValue = null;
   private mapper?: SeriesValueMapper = null;
 
-  private processMetadata(metadata: Map<Path, EdgeValue>) {
-    EdgeModelReader.seriesValueMapper(metadata)
+  private processMetadata(metadata: PathMap<EdgeValue>) {
+    this.seriesType = EdmCore.readSeriesType(metadata);
+    if (this.seriesType === "boolean_status") {
+      this.mapper = EdmCore.booleanValueMapper(metadata)
+    } else if (this.seriesType === "integer_enum") {
+      //this.mapper = EdmCore.integerLabelKey(metadata)
+    }
   }
 
   handle(update: IdKeyUpdate): void {
@@ -102,9 +109,9 @@ export class TimeSeriesDb implements KeyDb {
         }
 
         let renderValue: boolean | number | string;
-        if (this.mapper !== null) {
+        if (!isNullOrUndefined(this.mapper)) {
           let mapped = this.mapper.transform(up.value);
-          if (mapped !== null) {
+          if (!isNullOrUndefined(mapped)) {
             renderValue = mapped;
           } else {
             renderValue = up.value.value;
@@ -120,9 +127,6 @@ export class TimeSeriesDb implements KeyDb {
     } else {
       this.currentValue = null;
     }
-    // console.log("Updated time series jsValue: ");
-    // console.log(this.state());
-    // console.log(this.currentValue);
   }
 
   state(): KeyState {
@@ -133,7 +137,7 @@ export class TimeSeriesDb implements KeyDb {
 export class KeyValueDb implements KeyDb {
   constructor(
     private key: EndpointPath,
-    metadata: Map<Path, EdgeValue>,
+    metadata: PathMap<EdgeValue>,
     desc: LatestKeyValueDescriptor
   ) {
     this.processMetadata(metadata);
@@ -142,8 +146,8 @@ export class KeyValueDb implements KeyDb {
   private status: StatusType = "PENDING";
   private currentValue?: KeyValueValue = null;
 
-  private processMetadata(metadata: Map<Path, EdgeValue>) {
-    EdgeModelReader.seriesValueMapper(metadata)
+  private processMetadata(metadata: PathMap<EdgeValue>) {
+    //EdgeModelReader.seriesValueMapper(metadata)
   }
 
   handle(update: IdKeyUpdate): void {
@@ -174,7 +178,7 @@ export class KeyValueDb implements KeyDb {
 export class EventDb implements KeyDb {
   constructor(
     private key: EndpointPath,
-    metadata: Map<Path, EdgeValue>,
+    metadata: PathMap<EdgeValue>,
     desc: TimeSeriesValueDescriptor
   ) {}
 
@@ -207,7 +211,7 @@ export class EventDb implements KeyDb {
 export class OutputKeyDb implements KeyDb {
   constructor(
     private key: EndpointPath,
-    metadata: Map<Path, EdgeValue>,
+    metadata: PathMap<EdgeValue>,
   ) {}
 
   private status: StatusType = "PENDING";

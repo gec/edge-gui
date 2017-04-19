@@ -27,11 +27,6 @@ export class EdgeConsumerService {
     }
   }
 
-
-  /*ngOnInit(): void {
-    this.service.start();
-  }*/
-
   subscribePrefixes(prefixes: Path[]): Observable<IdEndpointPrefixUpdate[]> {
     this.checkStart();
     //this.service.subscribePrefixes(prefixes, updates => { console.log(updates) });
@@ -80,16 +75,15 @@ export class EdgeConsumerService {
   typedTabular(id: EndpointId, descriptor: EndpointDescriptor): Observable<TypedStates> {
     this.checkStart();
 
-    //let tables = new Map<String, EdgeKeyTable>();
-
     let seriesDescs: [EndpointPath, KeyDescriptor][] = [];
     let keyValueDescs: [EndpointPath, KeyDescriptor][] = [];
     let topicEventDescs: [EndpointPath, KeyDescriptor][] = [];
     let activeSetDescs: [EndpointPath, KeyDescriptor][] = [];
     let outputDescs: [EndpointPath, KeyDescriptor][] = [];
 
-    descriptor.dataKeySet.forEach((v, keyPath) => {
-      let endPath = new EndpointPath(id, keyPath);
+    descriptor.dataKeySet.items().forEach(item => {
+      let v = item.item;
+      let endPath = new EndpointPath(id, item.path);
 
       if (v.constructor === DataKeyDescriptor) {
         let dataKeyDesc = v as DataKeyDescriptor;

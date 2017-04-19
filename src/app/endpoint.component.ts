@@ -42,8 +42,12 @@ export class EndpointComponent implements OnInit {
       return this.service.typedTabular(this.id, obj)
     });
 
+    let sortStates = (l: KeyState, r: KeyState) => {
+      return l.key.toStringKey().localeCompare(r.key.toStringKey())
+    };
+
     typed.forEach(v => {
-      this.series = v.series;
+      this.series = v.series.sort(sortStates);
       this.keyValues = v.keyValues;
       this.events = v.topicEvents;
       this.activeSets = v.activeSets;

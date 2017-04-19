@@ -153,7 +153,9 @@ export class EdgeConsumer {
 
     let outputs: EndpointPath[] = [];
 
-    descriptor.dataKeySet.forEach((desc, key: Path) => {
+    descriptor.dataKeySet.items().forEach(v => {
+      let key = v.path;
+      let desc = v.item;
       switch (desc.typeDescriptor.constructor) {
         case TimeSeriesValueDescriptor: series.push(new EndpointPath(endpointId, key)); break;
         case LatestKeyValueDescriptor: keyValues.push(new EndpointPath(endpointId, key)); break;
@@ -161,7 +163,8 @@ export class EdgeConsumer {
         case ActiveSetValueDescriptor: activeSets.push(new EndpointPath(endpointId, key)); break;
       }
     });
-    descriptor.outputKeySet.forEach((desc, key) => {
+    descriptor.outputKeySet.items().forEach(v => {
+      let key = v.path;
       outputs.push(new EndpointPath(endpointId, key))
     });
 
