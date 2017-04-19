@@ -12,13 +12,8 @@ import {
 } from "./edge-consumer";
 import { isNullOrUndefined } from "util";
 import { EdmCore, SeriesType } from "./edge-edm-core";
+import NumberFormat = Intl.NumberFormat;
 
-class EdgeModelReader {
-
-  /*static seriesValueMapper(metadata: PathMap<EdgeValue>): SeriesValueMapper | null {
-    return null;
-  }*/
-}
 
 export interface SeriesValueMapper {
   transform(v: SampleValue): number | boolean | string | null
@@ -27,7 +22,7 @@ export interface SeriesValueMapper {
 export class TimeSeriesValue {
   constructor(
     public readonly value: SampleValue,
-    public readonly jsValue: boolean | number | string,
+    public readonly renderValue: boolean | number | string,
     public readonly unit: string,
     public readonly date: Date,
   ) {}
@@ -89,6 +84,7 @@ export class TimeSeriesDb implements KeyDb {
   private unit: string = null;
   private currentValue?: TimeSeriesValue = null;
   private mapper?: SeriesValueMapper = null;
+  private decimalPoints?: number = null;
 
   private processMetadata(metadata: PathMap<EdgeValue>) {
     this.seriesType = EdmCore.readSeriesType(metadata);
@@ -99,27 +95,43 @@ export class TimeSeriesDb implements KeyDb {
     }
 
     this.unit = EdmCore.readUnit(metadata);
+
+    this.decimalPoints = EdmCore.readDecimalPoints(metadata);
   }
 
   handle(update: IdKeyUpdate): void {
     this.status = update.statusType;
-    if (update.statusType === "RESOLVED_VALUE" && (update.constructor === IdDataKeyUpdate)) {
+    if (update.statusType === "RESOLVED_VALUE" && (update instanceof IdDataKeyUpdate)) {
       let dataUpdate = update as IdDataKeyUpdate;
-      if (!isNullOrUndefined(dataUpdate.value) && dataUpdate.value.constructor === SeriesUpdate) {
-        let up: SeriesUpdate = dataUpdate.value as SeriesUpdate;
+      if (!isNullOrUndefined(dataUpdate.value) && dataUpdate.value instanceof SeriesUpdate) {
+        let up: SeriesUpdate = dataUpdate.value;
         if (!isNullOrUndefined(up.descriptorUpdate)) {
           this.processMetadata(up.descriptorUpdate.metadata);
         }
 
         let renderValue: boolean | number | string;
-        if (!isNullOrUndefined(this.mapper)) {
-          let mapped = this.mapper.transform(up.value);
-          if (!isNullOrUndefined(mapped)) {
-            renderValue = mapped;
+        if (this.seriesType === "analog_status" || this.seriesType === "analog_sample") {
+
+          if (!isNullOrUndefined(this.decimalPoints)) {
+            renderValue = (+up.value.value).toFixed(this.decimalPoints);
           } else {
             renderValue = up.value.value;
           }
-        } else {
+
+        } else if (this.seriesType === "boolean_status" || this.seriesType === "integer_enum") {
+
+          if (!isNullOrUndefined(this.mapper)) {
+            let mapped = this.mapper.transform(up.value);
+            if (!isNullOrUndefined(mapped)) {
+              renderValue = mapped;
+            } else {
+              renderValue = up.value.value;
+            }
+          } else {
+            renderValue = up.value.value;
+          }
+
+        } else if (this.seriesType ===  "counter_status" || this.seriesType === "counter_sample") {
           renderValue = up.value.value;
         }
 
@@ -155,10 +167,9 @@ export class KeyValueDb implements KeyDb {
 
   handle(update: IdKeyUpdate): void {
     this.status = update.statusType;
-    if (update.statusType === "RESOLVED_VALUE" && (update.constructor === IdDataKeyUpdate)) {
-      let dataUpdate = update as IdDataKeyUpdate;
-      if (!isNullOrUndefined(dataUpdate.value) && dataUpdate.value.constructor === KeyValueUpdate) {
-        let up: KeyValueUpdate = dataUpdate.value as KeyValueUpdate;
+    if (update.statusType === "RESOLVED_VALUE" && (update instanceof IdDataKeyUpdate)) {
+      if (!isNullOrUndefined(update.value) && update.value instanceof KeyValueUpdate) {
+        let up: KeyValueUpdate = update.value;
         if (!isNullOrUndefined(up.descriptorUpdate)) {
           this.processMetadata(up.descriptorUpdate.metadata);
         }
@@ -190,10 +201,9 @@ export class EventDb implements KeyDb {
 
   handle(update: IdKeyUpdate): void {
     this.status = update.statusType;
-    if (update.statusType === "RESOLVED_VALUE" && (update.constructor === IdDataKeyUpdate)) {
-      let dataUpdate = update as IdDataKeyUpdate;
-      if (!isNullOrUndefined(dataUpdate.value) && dataUpdate.value.constructor === TopicEventUpdate) {
-        let up: TopicEventUpdate = dataUpdate.value as TopicEventUpdate;
+    if (update.statusType === "RESOLVED_VALUE" && (update instanceof IdDataKeyUpdate)) {
+      if (!isNullOrUndefined(update.value) && update.value instanceof TopicEventUpdate) {
+        let up: TopicEventUpdate = update.value;
 
         let date = new Date(up.time);
         let record = new EventValueRecord(up.topic, up.value, date);
@@ -245,25 +255,23 @@ export class EdgeKeyTable {
     console.log(keys);
     keys.forEach(tup => {
       let id = tup[0];
-      let v = tup[1];
-      if (v.constructor === DataKeyDescriptor) {
-        let dataKeyDesc = v as DataKeyDescriptor;
-        if (dataKeyDesc.typeDescriptor.constructor === TimeSeriesValueDescriptor) {
-          let desc = dataKeyDesc.typeDescriptor as TimeSeriesValueDescriptor;
-          let db = new TimeSeriesDb(id, dataKeyDesc.metadata, desc);
+      let keyDesc = tup[1];
+      if (keyDesc instanceof DataKeyDescriptor) {
+        if (keyDesc.typeDescriptor instanceof TimeSeriesValueDescriptor) {
+          let desc = keyDesc.typeDescriptor;
+          let db = new TimeSeriesDb(id, keyDesc.metadata, desc);
           this.map.set(id.toStringKey(), db);
-        } else if (dataKeyDesc.typeDescriptor.constructor === LatestKeyValueDescriptor) {
-          let desc = dataKeyDesc.typeDescriptor as LatestKeyValueDescriptor;
-          let db = new KeyValueDb(id, dataKeyDesc.metadata, desc);
+        } else if (keyDesc.typeDescriptor instanceof LatestKeyValueDescriptor) {
+          let desc = keyDesc.typeDescriptor;
+          let db = new KeyValueDb(id, keyDesc.metadata, desc);
           this.map.set(id.toStringKey(), db);
-        } else if (dataKeyDesc.typeDescriptor.constructor === EventTopicValueDescriptor) {
-          let desc = dataKeyDesc.typeDescriptor as EventTopicValueDescriptor;
-          let db = new EventDb(id, dataKeyDesc.metadata, desc);
+        } else if (keyDesc.typeDescriptor instanceof EventTopicValueDescriptor) {
+          let desc = keyDesc.typeDescriptor;
+          let db = new EventDb(id, keyDesc.metadata, desc);
           this.map.set(id.toStringKey(), db);
         }
-      } else if (v.constructor === OutputKeyDescriptor) {
-        let outputKeyDesc = v as OutputKeyDescriptor;
-        let db = new OutputKeyDb(id, outputKeyDesc.metadata);
+      } else if (keyDesc instanceof OutputKeyDescriptor) {
+        let db = new OutputKeyDb(id, keyDesc.metadata);
         this.map.set(id.toStringKey(), db)
       }
     })
@@ -281,8 +289,8 @@ export class EdgeKeyTable {
 
   handle(updates: IdKeyUpdate[]): void {
     updates.forEach(v => {
-      if (v.constructor === IdDataKeyUpdate) {
-        let up = v as IdDataKeyUpdate;
+      if (v instanceof IdDataKeyUpdate) {
+        let up = v;
         let db = this.map.get(up.id.toStringKey());
         //console.log(db);
         if (!isNullOrUndefined(db)) {
@@ -296,279 +304,3 @@ export class EdgeKeyTable {
     return this.map.size > 0;
   }
 }
-
-
-/*
-message KeyValueUpdate {
-  edge.data.Value jsValue = 1;
-}
-message SeriesUpdate {
-  edge.data.SampleValue jsValue = 1;
-  uint64 time = 2;
-}
-message TopicEventUpdate {
-  edge.Path topic = 1;
-  edge.data.Value jsValue = 2;
-  uint64 time = 3;
-}
-
-
-var tsDb = function(tsDesc, indexes, metadata) {
-
-  // TODO: caching, rotating store, etc...
-  var current = null;
-
-  var integerMap = null;
-  if (metadata != null && metadata.integerMapping != null) {
-    console.log("integer mapping: ");
-    console.log(metadata.integerMapping);
-    integerMap = {};
-    metadata.integerMapping.forEach(function(elem) {
-      integerMap[elem.index] = elem.name;
-    });
-  }
-
-  var boolMap = null;
-  if (metadata != null && metadata.boolMapping != null) {
-    console.log("bool mapping: ");
-    console.log(metadata.boolMapping);
-    boolMap = {};
-    metadata.boolMapping.forEach(function(elem) {
-      if (elem.jsValue != null) {
-        boolMap[elem.jsValue] = elem.name;
-      }
-    });
-  }
-
-
-  var edgeSampleValueToJsSampleValue = function(v) {
-    for (var k in v) {
-      if (k === 'floatValue' || k === 'doubleValue') {
-        return { decimal: v[k] }
-      } else if (k === 'sint32Value' || k === 'uint32Value' || k === 'sint64Value' || k === 'uint64Value') {
-        return { integer: v[k] }
-      } else if (k === 'boolValue') {
-        return { bool: v[k] }
-      } else {
-        console.log("Unrecognized sample jsValue type: ");
-        console.log(v);
-        return null;
-      }
-    }
-  }
-
-  var handleTsSeq = function(tss) {
-
-    var v = sampleValueToSimpleValue(tss.jsValue);
-    var t = tss.time;
-    var date = new Date(parseInt(t));
-
-    var typedValue = edgeSampleValueToJsSampleValue(tss.jsValue);
-    if (typedValue != null && typedValue.integer != null && integerMap != null && integerMap[typedValue.integer] != null) {
-      typedValue = { string: integerMap[typedValue.integer] };
-    }
-    if (typedValue != null && typedValue.bool != null && boolMap != null && boolMap[typedValue.bool] != null) {
-      typedValue = { string: boolMap[typedValue.bool] };
-    }
-
-    current = { type: 'timeSeriesValue', jsValue: v, typedValue: typedValue, time: t, date: date };
-  }
-
-  return {
-    currentValue: function() {
-      return current;
-    },
-    observe: function(updateWrap) {
-      if (updateWrap.seriesUpdate != null) {
-        var update = updateWrap.seriesUpdate;
-        handleTsSeq(update);
-      }
-    }
-  }
-};
-var eventDb = function(desc, indexes, metadata) {
-
-  var current = [];
-
-  var handleEvents = function(arr) {
-    arr.forEach(handleEvent);
-  };
-
-  var handleEvent = function(ev) {
-    var date = new Date(parseInt(ev.time));
-    current.push({
-      topicParts: ev.topic.part,
-      jsValue: valueToJsValue(ev.jsValue),
-      time: ev.time,
-      date: date
-    });
-    if (current.length > 100) {
-      current.shift();
-    }
-  };
-
-  return {
-    currentValue: function() {
-      return current;
-    },
-    observe: function(notification) {
-      console.log("EVENT notification: ");
-      console.log(notification);
-
-      if (notification.topicEventUpdate != null) {
-        handleEvent(notification.topicEventUpdate);
-      }
-    }
-  }
-};
-
-var kvDb = function(kvDesc, indexes, metadata) {
-
-  var current = null;
-
-  var handleSeqValue = function(v) {
-    console.log("handleValue: ");
-    console.log(v);
-
-    var jsValue = valueToJsValue(v);
-    console.log("JSVALUE:");
-    console.log(jsValue);
-
-    current = {
-      type: 'latestKeyValue',
-      jsValue: v,
-      jsValue: jsValue
-    };
-  };
-
-  return {
-    currentValue: function() {
-      return current;
-    },
-    observe: function(notification) {
-      console.log("KVDB notification: ");
-      console.log(notification);
-
-      if (notification.keyValueUpdate != null) {
-        if (notification.keyValueUpdate.jsValue != null) {
-          handleSeqValue(notification.keyValueUpdate.jsValue);
-        }
-      }
-    }
-  }
-};
-
-
-var dataObject = function(endpointId, key, desc, dbParam) {
-
-  var name = pathToString(key);
-  var indexes = null;
-  var metadata = null;
-
-  if (desc.indexes != null) {
-    desc.indexes.forEach(function(kv) {
-      if (indexes == null) { indexes = {}; }
-      indexes[pathToString(kv.key)] = sampleValueToSimpleValue(kv.jsValue);
-    });
-  }
-  if (desc.metadata != null) {
-    desc.metadata.forEach(function(kv) {
-      if (metadata == null) { metadata = {}; }
-      metadata[pathToString(kv.key)] = valueToJsValue(kv.jsValue);
-    });
-  }
-
-  var type = null;
-  var db = nullDb();
-  if (dbParam) {
-    db = dbParam;
-  } else {
-    if (desc['timeSeriesValue'] != null) {
-      db = tsDb(desc['timeSeriesValue'], indexes, metadata);
-      type = 'timeSeriesValue';
-    } else if (desc['latestKeyValue']) {
-      db = kvDb(desc['latestKeyValue'], indexes, metadata);
-      type = 'latestKeyValue';
-    } else if (desc['eventTopicValue']) {
-      db = eventDb(desc['eventTopicValue'], indexes, metadata);
-      type = 'eventTopicValue';
-    } else {
-      console.log("unhandled desc:")
-      console.log(desc);
-    }
-  }
-
-  return {
-    endpointId: endpointId,
-    key: key,
-    endPath: endpointPathFromIdAndKey(endpointId, key),
-    name : name,
-    type: type,
-    indexes: indexes,
-    metadata: metadata,
-    db: db
-  };
-};
-
-var outputObject = function(endpointId, key, desc) {
-
-  var name = pathToString(key);
-  var indexes = null;
-  var metadata = null;
-
-  console.log("OUTPUT DESC:");
-  console.log(desc);
-
-  if (desc.indexes != null) {
-    desc.indexes.forEach(function(kv) {
-      if (indexes == null) { indexes = {}; }
-      indexes[pathToString(kv.key)] = sampleValueToSimpleValue(kv.jsValue);
-    });
-  }
-  if (desc.metadata != null) {
-    desc.metadata.forEach(function(kv) {
-      if (metadata == null) { metadata = {}; }
-      metadata[pathToString(kv.key)] = valueToJsValue(kv.jsValue);
-    });
-  }
-
-  var inputDef = null;
-
-  if (metadata != null) {
-    var simpleInputType = metadata['simpleInputType'];
-    if (simpleInputType != null) {
-      if (simpleInputType === 'integer') {
-
-        var mapping = metadata['integerMapping']
-        if (mapping != null) {
-          console.log("MAPPING: ");
-          console.log(mapping);
-          inputDef = { type: 'integer', mapping: mapping };
-        } else {
-          inputDef = { type: 'integer' };
-        }
-
-      } else if (simpleInputType === 'double') {
-        inputDef = { type: 'double' };
-
-      } else if (simpleInputType === 'indication') {
-        inputDef = { type: 'indication' };
-      }
-    }
-  }
-
-  var endpointPath = endpointPathFromIdAndKey(endpointId, key);
-
-  return {
-    endpointId: endpointId,
-    key: key,
-    endPath: endpointPath,
-    endpointPathString: endPathToObjKey(endpointPath),
-    name: name,
-    indexes: indexes,
-    metadata: metadata,
-    inputDef: inputDef
-  };
-};
-
-*/

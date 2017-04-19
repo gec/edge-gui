@@ -6,7 +6,7 @@ import {
   UInt32Value, UInt64Value
 } from "./edge-data";
 import { SeriesValueMapper } from "./edge-key-db";
-import { isNullOrUndefined } from "util";
+import {isNullOrUndefined, isNumber} from "util";
 
 
 export type SeriesType = "analog_status" | "analog_sample" | "counter_status" | "counter_sample" | "boolean_status" | "integer_enum"
@@ -14,6 +14,7 @@ export type SeriesType = "analog_status" | "analog_sample" | "counter_status" | 
 export class EdmCore {
   static seriesTypeKey: string[] = ["edm", "core", "series_type"];
   static unitKey: string[] = ["edm", "core", "unit"];
+  static decimalPointsKey: string[] = ["edm", "core", "decimal_points"];
   static booleanLabelKey: string[] = ["edm", "core", "boolean_label"];
   static integerLabelKey: string[] = ["edm", "core", "integer_label"];
 
@@ -46,13 +47,34 @@ export class EdmCore {
   static readUnit(metadata: PathMap<EdgeValue>): string | null {
     let item = metadata.get(EdmCore.unitKey);
     if (!isNullOrUndefined(item)) {
-      console.log(item);
       let value = item.item;
       if (value instanceof StringValue) {
         return value.value;
       } else {
         return null;
       }
+    } else {
+      return null;
+    }
+  }
+
+  static readDecimalPoints(metadata: PathMap<EdgeValue>): number | null {
+    let item = metadata.get(EdmCore.decimalPointsKey);
+    if (!isNullOrUndefined(item)) {
+      console.log(item);
+
+      let v = item.item.value;
+      if (typeof v === "number") {
+        return v;
+      } else if (typeof v === "string") {
+        let num = Number.parseInt(v);
+        if (Number.isFinite(num)) {
+          return num;
+        } else {
+          return null;
+        }
+      }
+
     } else {
       return null;
     }
