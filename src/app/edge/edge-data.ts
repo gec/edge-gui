@@ -68,8 +68,9 @@ export type SampleValue = FloatValue | DoubleValue | SInt32Value | UInt32Value |
 export class EdgeDataParser {
 
   static parseNum<A>(v: any, f: (parsed: number) => A): A | null {
-    if (!isNullOrUndefined(v) && typeof v === "number") {
-      return f(v);
+    // uint64 from proto is a string
+    if (!isNullOrUndefined(v) /*&& typeof v === "number"*/) {
+      return f(+v);
     } else {
       return null;
     }
@@ -102,7 +103,6 @@ export class EdgeDataParser {
   }
   static parseMap(v: any): MapValue | null {
     if (!isNullOrUndefined(v) && !isNullOrUndefined(v.fields)) {
-
       let pairs: [EdgeValue, EdgeValue][] = [];
       v.fields.forEach(p => {
         if (!isNullOrUndefined(p.key) && !isNullOrUndefined(p.value)) {

@@ -28,6 +28,7 @@ export class TimeSeriesValue {
   constructor(
     public readonly value: SampleValue,
     public readonly jsValue: boolean | number | string,
+    public readonly unit: string,
     public readonly date: Date,
   ) {}
 }
@@ -85,7 +86,7 @@ export class TimeSeriesDb implements KeyDb {
 
   private status: StatusType = "PENDING";
   private seriesType: SeriesType = "analog_status";
-  private unit: String = "";
+  private unit: string = null;
   private currentValue?: TimeSeriesValue = null;
   private mapper?: SeriesValueMapper = null;
 
@@ -94,8 +95,10 @@ export class TimeSeriesDb implements KeyDb {
     if (this.seriesType === "boolean_status") {
       this.mapper = EdmCore.booleanValueMapper(metadata)
     } else if (this.seriesType === "integer_enum") {
-      //this.mapper = EdmCore.integerLabelKey(metadata)
+      this.mapper = EdmCore.integerValueMapper(metadata)
     }
+
+    this.unit = EdmCore.readUnit(metadata);
   }
 
   handle(update: IdKeyUpdate): void {
@@ -122,7 +125,7 @@ export class TimeSeriesDb implements KeyDb {
 
         let date = new Date(up.time);
 
-        this.currentValue = new TimeSeriesValue(up.value, renderValue, date);
+        this.currentValue = new TimeSeriesValue(up.value, renderValue, this.unit, date);
       }
     } else {
       this.currentValue = null;

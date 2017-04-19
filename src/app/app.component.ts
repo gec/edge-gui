@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { EdgeConsumerService } from "./edge-consumer.service";
 import { EndpointId, Path } from "./edge/edge-model";
+import {isNullOrUndefined} from "util";
 
 @Component({
   selector: 'app-root',
@@ -16,7 +17,13 @@ export class AppComponent implements OnInit {
     this.service.subscribePrefixes([new Path([])]).forEach(updates => {
       if (updates.length > 0) {
         let last = updates[updates.length - 1];
-        this.endpoints = last.value.value;
+        console.log("endpoint prefix result: ");
+        console.log(last);
+        if (!isNullOrUndefined(last.value)) {
+          this.endpoints = last.value.value;
+        } else {
+          this.endpoints = [];
+        }
       }
     })
   }

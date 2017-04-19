@@ -1,7 +1,10 @@
 
 
 import { Path, PathMap } from "./edge-model";
-import { EdgeValue, MapValue, StringValue } from "./edge-data";
+import {
+  BoolValue, EdgeValue, MapValue, SampleValue, SInt32Value, SInt64Value, StringValue,
+  UInt32Value, UInt64Value
+} from "./edge-data";
 import { SeriesValueMapper } from "./edge-key-db";
 import { isNullOrUndefined } from "util";
 
@@ -40,18 +43,40 @@ export class EdmCore {
     }
   }
 
+  static readUnit(metadata: PathMap<EdgeValue>): string | null {
+    let item = metadata.get(EdmCore.unitKey);
+    if (!isNullOrUndefined(item)) {
+      console.log(item);
+      let value = item.item;
+      if (value instanceof StringValue) {
+        return value.value;
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
+  }
+
   static booleanValueMapper(metadata: PathMap<EdgeValue>): SeriesValueMapper | null {
-    console.log("loading booleanValueMapper");
-    console.log(metadata);
     let mapItem = metadata.get(EdmCore.booleanLabelKey);
     if (!isNullOrUndefined(mapItem)) {
       let boolMap = mapItem.item;
       if (boolMap instanceof MapValue) {
-
-        console.log("BOOLMAP: ");
-        console.log(boolMap);
-
+        return LabelBoolMapper.load(boolMap);
+      } else {
         return null;
+      }
+    } else {
+      return null;
+    }
+  }
+  static integerValueMapper(metadata: PathMap<EdgeValue>): SeriesValueMapper | null {
+    let mapItem = metadata.get(EdmCore.integerLabelKey);
+    if (!isNullOrUndefined(mapItem)) {
+      let map = mapItem.item;
+      if (map instanceof MapValue) {
+        return LabelIntMapper.load(map);
       } else {
         return null;
       }
@@ -61,40 +86,56 @@ export class EdmCore {
   }
 }
 
+// TODO: these could be one flexible thing, as long as we can be sure more specific logic won't be inserted in the future
+class LabelBoolMapper implements SeriesValueMapper {
 
-/*
-object EdgeCoreModel {
+  constructor(private vmap: Map<boolean, string>) {}
 
-  sealed abstract class SeriesType(val value: String)
-case object AnalogStatus extends SeriesType("analog_status")
-case object AnalogSample extends SeriesType("analog_sample")
-case object CounterStatus extends SeriesType("counter_status")
-case object CounterSample extends SeriesType("counter_sample")
-case object BooleanStatus extends SeriesType("boolean_status")
-case object IntegerEnum extends SeriesType("integer_enum")
-
-  def seriesType(seriesType: SeriesType): (Path, Value) = {
-  (Path(Seq("edm", "core", "series_type")), ValueString(seriesType.value))
-}
-
-  def unitMetadata(unit: String): (Path, Value) = {
-  (Path(Seq("edm", "core", "unit")), ValueString(unit))
-}
-
-  def labeledBooleanMetadata(truthLabel: String, falseLabel: String): (Path, Value) = {
-  (Path(Seq("edm", "core", "boolean_label")),
-    ValueMap(Map(
-      ValueBool(true) -> ValueString(truthLabel),
-    ValueBool(false) -> ValueString(falseLabel))))
-}
-
-  def labeledIntegerMetadata(map: Map[Long, String]): (Path, Value) = {
-
-    val vmap: Map[Value, Value] = map.map {
-  case (k, v) => (ValueInt64(k), ValueString(v))
+  transform(v: SampleValue): number | boolean | string | null {
+    if (v instanceof BoolValue) {
+      return this.vmap.get(v.value) || null;
+    } else {
+      return null;
+    }
   }
 
-  (Path(Seq("edm", "core", "integer_label")),
-    ValueMap(vmap))
+  static load(map: MapValue): LabelBoolMapper {
+    let resultMap = new Map<boolean, string>();
+    map.value.pairs().forEach(pair => {
+      let key = pair[0];
+      let v = pair[1];
+      if (key instanceof BoolValue && v instanceof StringValue) {
+        resultMap.set(key.value, v.value);
+      }
+    });
+    return new LabelBoolMapper(resultMap);
+  }
 }
-}*/
+
+
+class LabelIntMapper implements SeriesValueMapper {
+
+  constructor(private vmap: Map<number, string>) {}
+
+  transform(v: SampleValue): number | boolean | string | null {
+    if (typeof v.value === 'number') {
+      return this.vmap.get(v.value) || null;
+    } else {
+      return null;
+    }
+  }
+
+  static load(map: MapValue): LabelIntMapper {
+    let resultMap = new Map<number, string>();
+    map.value.pairs().forEach(pair => {
+      let key = pair[0];
+      let v = pair[1];
+      if ((key instanceof SInt32Value || key instanceof UInt32Value || key instanceof SInt64Value || key instanceof UInt64Value) &&
+        v instanceof StringValue) {
+        resultMap.set(key.value, v.value);
+      }
+    });
+    return new LabelIntMapper(resultMap);
+  }
+}
+
