@@ -82,23 +82,21 @@ export class EdgeConsumerService {
     let outputDescs: [EndpointPath, KeyDescriptor][] = [];
 
     descriptor.dataKeySet.items().forEach(item => {
-      let v = item.item;
+      let keyDesc = item.item;
       let endPath = new EndpointPath(id, item.path);
 
-      if (v.constructor === DataKeyDescriptor) {
-        let dataKeyDesc = v as DataKeyDescriptor;
-        if (dataKeyDesc.typeDescriptor.constructor === TimeSeriesValueDescriptor) {
-          seriesDescs.push([endPath, dataKeyDesc]);
-        } else if (dataKeyDesc.typeDescriptor.constructor === LatestKeyValueDescriptor) {
-          keyValueDescs.push([endPath, dataKeyDesc]);
-        } else if (dataKeyDesc.typeDescriptor.constructor === EventTopicValueDescriptor) {
-          topicEventDescs.push([endPath, dataKeyDesc]);
-        } else if (dataKeyDesc.typeDescriptor.constructor === ActiveSetValueDescriptor) {
-          activeSetDescs.push([endPath, dataKeyDesc]);
+      if (keyDesc instanceof DataKeyDescriptor) {
+        if (keyDesc.typeDescriptor instanceof TimeSeriesValueDescriptor) {
+          seriesDescs.push([endPath, keyDesc]);
+        } else if (keyDesc.typeDescriptor instanceof LatestKeyValueDescriptor) {
+          keyValueDescs.push([endPath, keyDesc]);
+        } else if (keyDesc.typeDescriptor instanceof EventTopicValueDescriptor) {
+          topicEventDescs.push([endPath, keyDesc]);
+        } else if (keyDesc.typeDescriptor instanceof ActiveSetValueDescriptor) {
+          activeSetDescs.push([endPath, keyDesc]);
         }
-      } else if (v.constructor === OutputKeyDescriptor) {
-        let desc = v as OutputKeyDescriptor;
-        outputDescs.push([endPath, desc])
+      } else if (keyDesc instanceof OutputKeyDescriptor) {
+        outputDescs.push([endPath, keyDesc])
       }
     });
 

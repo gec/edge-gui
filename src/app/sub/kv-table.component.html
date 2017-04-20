@@ -10,7 +10,7 @@
     <tbody>
     <tr *ngFor="let state of states">
       <td><edge-path [path]="state.key.key"></edge-path></td>
-      <td>{{state.value}}</td>
+      <td><edge-value [value]="state.value?.value"></edge-value></td>
       <!--<td style="text-align: right">
         <button type="button" class="btn btn-default" data-toggle="modal" data-target="#keyValueObjectModal" data-key="akey" (click)="setModalState(state)">
           <span class="glyphicon glyphicon-align-justify" aria-hidden="true"></span>

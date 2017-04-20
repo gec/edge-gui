@@ -160,6 +160,11 @@ export class KeyValueDb implements KeyDb {
 
   private status: StatusType = "PENDING";
   private currentValue?: KeyValueValue = null;
+  private cached: KeyState = new KeyState(this.key, this.status, "KeyValue", this.currentValue);
+
+  private updateCache(): void {
+    this.cached = new KeyState(this.key, this.status, "KeyValue", this.currentValue);
+  }
 
   private processMetadata(metadata: PathMap<EdgeValue>) {
     //EdgeModelReader.seriesValueMapper(metadata)
@@ -174,10 +179,18 @@ export class KeyValueDb implements KeyDb {
           this.processMetadata(up.descriptorUpdate.metadata);
         }
 
+        if (!isNullOrUndefined(this.currentValue) && !isNullOrUndefined(this.currentValue.value) && up.value.toStringKey() !== this.currentValue.value.toStringKey()) {
+          console.log("kv update: " + this.key.toStringKey());
+        } else {
+          console.log("kv no change: " + this.key.toStringKey());
+        }
+
         this.currentValue = new KeyValueValue(up.value);
+        this.updateCache();
       }
     } else {
       this.currentValue = null;
+      this.updateCache();
     }
     // console.log("Updated time series jsValue: ");
     // console.log(this.state());
@@ -185,7 +198,7 @@ export class KeyValueDb implements KeyDb {
   }
 
   state(): KeyState {
-    return new KeyState(this.key, this.status, "KeyValue", this.currentValue);
+    return this.cached;
   }
 }
 
@@ -278,16 +291,22 @@ export class EdgeKeyTable {
   }
 
   private map = new Map<string, KeyDb>();
+  private cached: KeyState[] = [];
 
   snapshot(): KeyState[] {
+    return this.cached;
+  }
+
+  updateCache(): void {
     let result = [];
     this.map.forEach(v => {
       result.push(v.state());
     });
-    return result;
+    this.cached = result;
   }
 
   handle(updates: IdKeyUpdate[]): void {
+    let dirty = false;
     updates.forEach(v => {
       if (v instanceof IdDataKeyUpdate) {
         let up = v;
@@ -295,9 +314,13 @@ export class EdgeKeyTable {
         //console.log(db);
         if (!isNullOrUndefined(db)) {
           db.handle(up);
+          dirty = true;
         }
       }
-    })
+    });
+    if (dirty) {
+      this.updateCache();
+    }
   }
 
   isActive(): boolean {

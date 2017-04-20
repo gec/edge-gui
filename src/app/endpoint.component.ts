@@ -46,12 +46,19 @@ export class EndpointComponent implements OnInit {
       return l.key.toStringKey().localeCompare(r.key.toStringKey())
     };
 
+
     typed.forEach(v => {
+      let nextKvs = v.keyValues.sort(sortStates);
+      console.log(this.keyValues);
+      console.log(nextKvs);
+
+
+      this.keyValues = nextKvs;
+
       this.series = v.series.sort(sortStates);
-      this.keyValues = v.keyValues;
-      this.events = v.topicEvents;
-      this.activeSets = v.activeSets;
-      this.outputs = v.outputs;
+      this.events = v.topicEvents.sort(sortStates);
+      this.activeSets = v.activeSets.sort(sortStates);
+      this.outputs = v.outputs.sort(sortStates);
     });
   }
 }

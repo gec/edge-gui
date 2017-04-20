@@ -10,6 +10,7 @@ import { SeriesTableComponent } from "./sub/series-table.component";
 import { EdgePathComponent } from "./item/edge-path.component";
 import { KeyValueTableComponent } from "./sub/kv-table.component";
 import { EventKeysTableComponent } from "./sub/event-keys-table.component";
+import {EdgeValueComponent} from "./item/edge-value.component";
 
 @NgModule({
   declarations: [
@@ -21,6 +22,7 @@ import { EventKeysTableComponent } from "./sub/event-keys-table.component";
     EventKeysTableComponent,
 
     EdgePathComponent,
+    EdgeValueComponent,
   ],
   imports: [
     BrowserModule,

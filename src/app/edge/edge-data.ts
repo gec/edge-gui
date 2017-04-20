@@ -10,54 +10,54 @@ export interface NumericValue {
 
 export class FloatValue implements NumericValue, KeyLike {
   constructor(public readonly value: number) {}
-  toStringKey(): String { return "FloatValue(" + this.value + ")" };
+  toStringKey(): string { return "FloatValue(" + this.value + ")" };
 }
 export class DoubleValue implements NumericValue {
   constructor(public readonly value: number) {}
-  toStringKey(): String { return "DoubleValue(" + this.value + ")" };
+  toStringKey(): string { return "DoubleValue(" + this.value + ")" };
 }
 export class SInt32Value implements NumericValue {
   constructor(public readonly value: number) {}
-  toStringKey(): String { return "SInt32Value(" + this.value + ")" };
+  toStringKey(): string { return "SInt32Value(" + this.value + ")" };
 }
 export class UInt32Value implements NumericValue {
   constructor(public readonly value: number) {}
-  toStringKey(): String { return "UInt32Value(" + this.value + ")" };
+  toStringKey(): string { return "UInt32Value(" + this.value + ")" };
 }
 export class SInt64Value implements NumericValue {
   constructor(public readonly value: number) {}
-  toStringKey(): String { return "SInt64Value(" + this.value + ")" };
+  toStringKey(): string { return "SInt64Value(" + this.value + ")" };
 }
 export class UInt64Value implements NumericValue {
   constructor(public readonly value: number) {}
-  toStringKey(): String { return "UInt64Value(" + this.value + ")" };
+  toStringKey(): string { return "UInt64Value(" + this.value + ")" };
 }
 export class BoolValue {
   constructor(public readonly value: boolean) {}
-  toStringKey(): String { return "BoolValue(" + this.value + ")" };
+  toStringKey(): string { return "BoolValue(" + this.value + ")" };
 }
 export class StringValue {
   constructor(public readonly value: string) {}
-  toStringKey(): String { return "StringValue(" + this.value + ")" };
+  toStringKey(): string { return "StringValue(" + this.value + ")" };
 }
 export class BytesValue {
   constructor(public readonly value: string) {}
-  toStringKey(): String { return "BytesValue(" + this.value + ")" };
+  toStringKey(): string { return "BytesValue(" + this.value + ")" };
 }
 /*export class MapValue {
   constructor(public readonly value: Map<EdgeValue, EdgeValue>) {}
 }*/
 export class MapValue {
   constructor(public readonly value: KeyedMap<EdgeValue, EdgeValue>) {}
-  toStringKey(): String { return "MapValue(" + this.value.pairs().map(v => "(" + v[0] + "," + v[1] + ")").join(",") + ")" };
+  toStringKey(): string { return "MapValue(" + this.value.pairs().map(v => "(" + v[0] + "," + v[1] + ")").join(",") + ")" };
 }
 export class ListValue {
   constructor(public readonly value: Array<EdgeValue>) {}
-  toStringKey(): String { return "ListValue(" + this.value.map(v => v.toStringKey()).join(",") + ")" };
+  toStringKey(): string { return "ListValue(" + this.value.map(v => v.toStringKey()).join(",") + ")" };
 }
 export class TaggedValue {
   constructor(public readonly tag: string, public readonly value: EdgeValue) {}
-  toStringKey(): String { return "TaggedValue(" + this.tag + "," + this.value.toStringKey() + ")" };
+  toStringKey(): string { return "TaggedValue(" + this.tag + "," + this.value.toStringKey() + ")" };
 }
 
 export type EdgeValue = FloatValue | DoubleValue | SInt32Value | UInt32Value | SInt64Value | UInt64Value | BoolValue | StringValue | BytesValue | MapValue | ListValue | TaggedValue
