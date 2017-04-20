@@ -26,3 +26,22 @@ div.value-panel h5 {
 div.value-panel h5 span {
   float: right!important;
 }
+
+.edge-value-field-key {
+  color: #2f6f9f;
+}
+.edge-value-field-key .edge-value-scalar-string {
+  color: #2f6f9f;
+}
+
+.edge-value-scalar-string {
+  color: #d44950;
+}
+
+.edge-value-tag-name {
+  color: #4f9fcf;
+}
+
+.edge-value-block {
+  font-family: monospace;
+}

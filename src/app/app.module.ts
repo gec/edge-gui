@@ -10,7 +10,10 @@ import { SeriesTableComponent } from "./sub/series-table.component";
 import { EdgePathComponent } from "./item/edge-path.component";
 import { KeyValueTableComponent } from "./sub/kv-table.component";
 import { EventKeysTableComponent } from "./sub/event-keys-table.component";
-import {EdgeValueComponent} from "./item/edge-value.component";
+import {EdgeValueComponent} from "./value/edge-value.component";
+import {EdgeValueScalarComponent} from "./value/edge-value-scalar.component";
+import {EdgeValueMapInnerComponent} from "./value/edge-value-map-inner.component";
+import {EdgeValueFieldNameComponent} from "./value/edge-value-field-name.component";
 
 @NgModule({
   declarations: [
@@ -23,6 +26,9 @@ import {EdgeValueComponent} from "./item/edge-value.component";
 
     EdgePathComponent,
     EdgeValueComponent,
+    EdgeValueScalarComponent,
+    EdgeValueMapInnerComponent,
+    EdgeValueFieldNameComponent,
   ],
   imports: [
     BrowserModule,
