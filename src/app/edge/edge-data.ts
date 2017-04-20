@@ -130,6 +130,20 @@ export class EdgeDataParser {
       return null;
     }
   }
+  static parseTaggedValue(v: any): TaggedValue | null {
+    console.log("parseTaggedValue");
+    console.log(v);
+    if (!isNullOrUndefined(v) && !isNullOrUndefined(v.tag) && !isNullOrUndefined(v.value)) {
+      let basicValue = this.parseValue(v.value);
+      if (!isNullOrUndefined(basicValue) && typeof v.tag === 'string') {
+        return new TaggedValue(v.tag, basicValue);
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
+  }
 
   static parseValue(pjson: any): EdgeValue | null {
     if (!isNullOrUndefined(pjson)) {
@@ -146,7 +160,13 @@ export class EdgeDataParser {
         me.parseNum(pjson.doubleValue, v => new DoubleValue(v)) ||
         me.parseString(pjson.bytesValue, v => new BytesValue(v)) ||
         me.parseList(pjson.listValue) ||
-        me.parseMap(pjson.mapValue);
+        me.parseMap(pjson.mapValue) ||
+        me.parseTaggedValue(pjson.taggedValue);
+
+      if (!result) {
+        console.log("COULD NOT PARSE:");
+        console.log(pjson);
+      }
 
       return result;
     } else {

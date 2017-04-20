@@ -274,7 +274,7 @@ export class EdgeKeyTable {
         let db = new OutputKeyDb(id, keyDesc.metadata);
         this.map.set(id.toStringKey(), db)
       }
-    })
+    });
   }
 
   private map = new Map<string, KeyDb>();

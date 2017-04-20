@@ -10,11 +10,12 @@
     <tbody>
     <tr *ngFor="let state of states">
       <td><edge-path [path]="state.key.key"></edge-path></td>
-      <td style="text-align: right">
+      <td>{{state.value}}</td>
+      <!--<td style="text-align: right">
         <button type="button" class="btn btn-default" data-toggle="modal" data-target="#keyValueObjectModal" data-key="akey" (click)="setModalState(state)">
           <span class="glyphicon glyphicon-align-justify" aria-hidden="true"></span>
         </button>
-      </td>
+      </td>-->
     </tr>
     </tbody>
   </table>
@@ -38,7 +39,7 @@
               <td style="text-align: right; overflow-wrap:break-word"><code></code></td>
             </tr>
           </table>-->
-          {{modalState.value?.value}}
+          {{modalState.value}}
         </div>
       </div>
     </div>
