@@ -1,6 +1,6 @@
 
 import { Component, Input } from "@angular/core";
-import { KeyState } from "../edge/edge-key-db";
+import { KeyState, OutputStatusStateValue } from "../edge/edge-key-db";
 import { EndpointPath } from "../edge/edge-model";
 import { EdgeConsumerService } from "../edge-consumer.service";
 import { DoubleValue } from "../edge/edge-data";
@@ -27,7 +27,20 @@ export class SetpointFormComponent {
 
   issueValue(key: EndpointPath, value: number) {
     if (!isNullOrUndefined(value)) {
-      this.service.issueOutputRequest(key, new DoubleValue(value));
+      let v = value;
+      console.log("Originally: " + v);
+      if (!isNullOrUndefined(this.state.value) && this.state.value instanceof OutputStatusStateValue) {
+        let outValue = this.state.value;
+        if (!isNullOrUndefined(outValue.requestScale)) {
+          v = v * outValue.requestScale;
+        }
+        if (!isNullOrUndefined(outValue.requestOffset)) {
+          v = v + outValue.requestOffset;
+        }
+      }
+      console.log("Issuing: " + v);
+
+      this.service.issueOutputRequest(key, new DoubleValue(v));
     }
   }
 }

@@ -234,6 +234,9 @@ export class OutputStatusStateValue {
   constructor(
     public readonly outputStatus: OutputKeyStatus | null,
     public readonly outputType: OutputType,
+    public readonly requestScale: number | null,
+    public readonly requestOffset: number | null,
+    public readonly integerLabels: [string, number][] | null,
   ) {}
 }
 
@@ -243,28 +246,30 @@ export class OutputKeyDb implements KeyDb {
     metadata: PathMap<EdgeValue>,
   ) {
     this.processMetadata(metadata);
-    this.current = new OutputStatusStateValue(null, this.outputType)
+    this.current = new OutputStatusStateValue(null, this.outputType, this.requestScale, this.requestOffset, this.integerLabels)
   }
 
   private status: StatusType = "PENDING";
   private current?: OutputStatusStateValue = null;
   private outputType: OutputType = "simple_indication";
+  private requestScale?: number = null;
+  private requestOffset?: number = null;
+  private integerLabels?: [string, number][] = null;
 
   private processMetadata(metadata: PathMap<EdgeValue>) {
     this.outputType = EdmCore.readOutputType(metadata);
-    console.log("Output type");
-    console.log(this.outputType);
+    this.requestScale = EdmCore.readRequestScale(metadata);
+    this.requestOffset = EdmCore.readRequestOffset(metadata);
+    this.integerLabels = EdmCore.readRequestIntegerLabels(metadata);
   }
 
   handle(update: IdKeyUpdate): void {
-    console.log("Output key update: ");
-    console.log(update);
     this.status = update.statusType;
     if (update.statusType === "RESOLVED_VALUE" && update instanceof IdOutputKeyUpdate) {
       this.status = update.statusType;
 
       if (!isNullOrUndefined(update.value)) {
-        this.current = new OutputStatusStateValue(update.value.statusUpdate, this.outputType)
+        this.current = new OutputStatusStateValue(update.value.statusUpdate, this.outputType, this.requestScale, this.requestOffset, this.integerLabels)
       }
     }
   }

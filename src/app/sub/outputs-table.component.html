@@ -17,6 +17,9 @@
         <div *ngSwitchCase="'analog_setpoint'" class="input-group pull-right">
           <setpoint-form [state]="state"></setpoint-form>
         </div>
+        <div *ngSwitchCase="'enumeration_setpoint'" class="input-group pull-right">
+          <enum-setpoint-form [state]="state"></enum-setpoint-form>
+        </div>
       </td>
     </tr>
     </tbody>

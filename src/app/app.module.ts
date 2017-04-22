@@ -17,6 +17,7 @@ import {EdgeValueFieldNameComponent} from "./value/edge-value-field-name.compone
 import { OutputsTableComponent } from "./sub/outputs-table.component";
 import { SetpointFormComponent } from "./item/setpoint-form.component";
 import { IndicationFormComponent } from "./item/indication-form.component";
+import { EnumSetpointFormComponent } from "./item/enum-setpoint-form.component";
 
 @NgModule({
   declarations: [
@@ -31,6 +32,7 @@ import { IndicationFormComponent } from "./item/indication-form.component";
     EdgePathComponent,
     SetpointFormComponent,
     IndicationFormComponent,
+    EnumSetpointFormComponent,
 
     EdgeValueComponent,
     EdgeValueScalarComponent,

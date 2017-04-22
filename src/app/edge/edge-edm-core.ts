@@ -2,7 +2,7 @@
 
 import { Path, PathMap } from "./edge-model";
 import {
-  BoolValue, EdgeValue, MapValue, SampleValue, SInt32Value, SInt64Value, StringValue,
+  BoolValue, EdgeValue, MapValue, NumericValue, SampleValue, SInt32Value, SInt64Value, StringValue,
   UInt32Value, UInt64Value
 } from "./edge-data";
 import { SeriesValueMapper } from "./edge-key-db";
@@ -18,7 +18,7 @@ case object EnumerationSetpoint extends OutputType("enumeration_setpoint")
 }*/
 
 export type SeriesType = "analog_status" | "analog_sample" | "counter_status" | "counter_sample" | "boolean_status" | "integer_enum"
-export type OutputType = "simple_indication" | "parameterized_indication" | "analog_setpoint" | "boolean_setpoint" | "enumeration_setpoint"
+export type OutputType = "simple_indication" | "analog_setpoint" | "boolean_setpoint" | "enumeration_setpoint"
 
 export class EdmCore {
   static seriesTypeKey: string[] = ["edm", "core", "series_type"];
@@ -28,9 +28,58 @@ export class EdmCore {
   static integerLabelKey: string[] = ["edm", "core", "integer_label"];
 
   static outputTypeKey: string[] = ["edm", "core", "output_type"];
+  static outputRequestBooleanLabels: string[] = ["edm", "core", "request_boolean_labels"];
+  static outputRequestIntegerLabels: string[] = ["edm", "core", "request_integer_labels"];
+  static outputRequestScale: string[] = ["edm", "core", "request_scale"];
+  static outputRequestOffset: string[] = ["edm", "core", "request_offset"];
 
   //static allSeriesTypes = ["analog_status", "analog_sample", "counter_status", "counter_sample", "boolean_status", "integer_enum"];
 
+
+  private static readNumeric(key: string[], metadata: PathMap<EdgeValue>): number | null {
+    let item = metadata.get(key);
+    if (!isNullOrUndefined(item)) {
+      let number = this.valueAsNumeric(item.item);
+      if (!isNullOrUndefined(number)) {
+        return number;
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
+  }
+
+  static readRequestScale(metadata: PathMap<EdgeValue>): number | null {
+    return this.readNumeric(EdmCore.outputRequestScale, metadata);
+  }
+
+  static readRequestOffset(metadata: PathMap<EdgeValue>): number | null {
+    return this.readNumeric(EdmCore.outputRequestOffset, metadata);
+  }
+
+  static readRequestIntegerLabels(metadata: PathMap<EdgeValue>): [string, number][] | null {
+    let mapItem = metadata.get(EdmCore.outputRequestIntegerLabels);
+    if (!isNullOrUndefined(mapItem)) {
+      let map = mapItem.item;
+      if (map instanceof MapValue) {
+        let results: [string, number][] = [];
+        map.value.pairs().forEach(pair => {
+          let key = pair[0];
+          let v = pair[1];
+          if ((key instanceof SInt32Value || key instanceof UInt32Value || key instanceof SInt64Value || key instanceof UInt64Value) &&
+            v instanceof StringValue) {
+            results.push([v.value, key.value]);
+          }
+        });
+        return results;
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
+  }
 
   static readOutputType(metadata: PathMap<EdgeValue>): OutputType {
     let result = metadata.get(EdmCore.outputTypeKey);
@@ -40,7 +89,7 @@ export class EdmCore {
         let value = stringValue.value;
         switch (value) {
           case "simple_indication": return "simple_indication";
-          case "parameterized_indication": return "parameterized_indication";
+          //case "parameterized_indication": return "parameterized_indication";
           case "analog_setpoint": return "analog_setpoint";
           case "boolean_setpoint": return "boolean_setpoint";
           case "enumeration_setpoint": return "enumeration_setpoint";
@@ -92,26 +141,22 @@ export class EdmCore {
     }
   }
 
-  static readDecimalPoints(metadata: PathMap<EdgeValue>): number | null {
-    let item = metadata.get(EdmCore.decimalPointsKey);
-    if (!isNullOrUndefined(item)) {
-      console.log(item);
-
-      let v = item.item.value;
-      if (typeof v === "number") {
-        return v;
-      } else if (typeof v === "string") {
-        let num = Number.parseInt(v);
-        if (Number.isFinite(num)) {
-          return num;
-        } else {
-          return null;
-        }
+  private static valueAsNumeric(value: EdgeValue): number | null {
+    let v = value.value;
+    if (typeof v === "number") {
+      return v;
+    } else if (typeof v === "string") {
+      let num = Number.parseInt(v);
+      if (Number.isFinite(num)) {
+        return num;
+      } else {
+        return null;
       }
-
-    } else {
-      return null;
     }
+  }
+
+  static readDecimalPoints(metadata: PathMap<EdgeValue>): number | null {
+    return this.readNumeric(EdmCore.decimalPointsKey, metadata);
   }
 
   static booleanValueMapper(metadata: PathMap<EdgeValue>): SeriesValueMapper | null {
