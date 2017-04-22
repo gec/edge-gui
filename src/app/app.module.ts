@@ -14,6 +14,9 @@ import {EdgeValueComponent} from "./value/edge-value.component";
 import {EdgeValueScalarComponent} from "./value/edge-value-scalar.component";
 import {EdgeValueMapInnerComponent} from "./value/edge-value-map-inner.component";
 import {EdgeValueFieldNameComponent} from "./value/edge-value-field-name.component";
+import { OutputsTableComponent } from "./sub/outputs-table.component";
+import { SetpointFormComponent } from "./item/setpoint-form.component";
+import { IndicationFormComponent } from "./item/indication-form.component";
 
 @NgModule({
   declarations: [
@@ -23,8 +26,12 @@ import {EdgeValueFieldNameComponent} from "./value/edge-value-field-name.compone
     SeriesTableComponent,
     KeyValueTableComponent,
     EventKeysTableComponent,
+    OutputsTableComponent,
 
     EdgePathComponent,
+    SetpointFormComponent,
+    IndicationFormComponent,
+
     EdgeValueComponent,
     EdgeValueScalarComponent,
     EdgeValueMapInnerComponent,

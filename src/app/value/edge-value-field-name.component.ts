@@ -13,9 +13,6 @@ import {
       <span *ngSwitchCase="'string'" class="edge-value-scalar edge-value-field-name-string">{{value.value}}</span>
       <span *ngSwitchCase="'boolean'" class="edge-value-scalar edge-value-field-name-boolean">{{value.value}}</span>
     </span>
-    <!--<div *ngIf="isNumeric()" class="edge-value-scalar edge-value-scalar-numeric">{{value.value}}</div>
-    <div *ngIf="isString()" class="edge-value-scalar edge-value-scalar-string">{{value.value}}</div>-->
-    
   `,
   styles: []
 })

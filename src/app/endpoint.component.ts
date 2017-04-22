@@ -48,13 +48,7 @@ export class EndpointComponent implements OnInit {
 
 
     typed.forEach(v => {
-      let nextKvs = v.keyValues.sort(sortStates);
-      console.log(this.keyValues);
-      console.log(nextKvs);
-
-
-      this.keyValues = nextKvs;
-
+      this.keyValues = v.keyValues.sort(sortStates);
       this.series = v.series.sort(sortStates);
       this.events = v.topicEvents.sort(sortStates);
       this.activeSets = v.activeSets.sort(sortStates);

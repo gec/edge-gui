@@ -8,8 +8,17 @@ import {
 import { SeriesValueMapper } from "./edge-key-db";
 import {isNullOrUndefined, isNumber} from "util";
 
+/*
+object OutputType {
+case object SimpleIndication extends OutputType("simple_indication")
+case object ParameterizedIndication extends OutputType("parameterized_indication")
+case object AnalogSetpoint extends OutputType("analog_setpoint")
+case object BooleanSetpoint extends OutputType("boolean_setpoint")
+case object EnumerationSetpoint extends OutputType("enumeration_setpoint")
+}*/
 
 export type SeriesType = "analog_status" | "analog_sample" | "counter_status" | "counter_sample" | "boolean_status" | "integer_enum"
+export type OutputType = "simple_indication" | "parameterized_indication" | "analog_setpoint" | "boolean_setpoint" | "enumeration_setpoint"
 
 export class EdmCore {
   static seriesTypeKey: string[] = ["edm", "core", "series_type"];
@@ -18,7 +27,32 @@ export class EdmCore {
   static booleanLabelKey: string[] = ["edm", "core", "boolean_label"];
   static integerLabelKey: string[] = ["edm", "core", "integer_label"];
 
+  static outputTypeKey: string[] = ["edm", "core", "output_type"];
+
   //static allSeriesTypes = ["analog_status", "analog_sample", "counter_status", "counter_sample", "boolean_status", "integer_enum"];
+
+
+  static readOutputType(metadata: PathMap<EdgeValue>): OutputType {
+    let result = metadata.get(EdmCore.outputTypeKey);
+    if (result !== null && typeof result !== 'undefined') {
+      let stringValue = result.item;
+      if (stringValue instanceof StringValue) {
+        let value = stringValue.value;
+        switch (value) {
+          case "simple_indication": return "simple_indication";
+          case "parameterized_indication": return "parameterized_indication";
+          case "analog_setpoint": return "analog_setpoint";
+          case "boolean_setpoint": return "boolean_setpoint";
+          case "enumeration_setpoint": return "enumeration_setpoint";
+        }
+        return "simple_indication";
+      } else {
+        return "simple_indication";
+      }
+    } else {
+      return "simple_indication";
+    }
+  }
 
   static readSeriesType(metadata: PathMap<EdgeValue>): SeriesType {
     let result = metadata.get(EdmCore.seriesTypeKey);

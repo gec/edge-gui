@@ -12,6 +12,7 @@ import {
 import { EdgeConsumer, IdKeyUpdate } from "./edge/edge-consumer";
 import { EdgeKeyTable, KeyState } from "./edge/edge-key-db";
 import { isNullOrUndefined } from "util";
+import { EdgeValue } from "./edge/edge-data";
 
 
 @Injectable()
@@ -25,6 +26,10 @@ export class EdgeConsumerService {
       this.service.start();
       this.started = true;
     }
+  }
+
+  issueOutputRequest(key: EndpointPath, value?: EdgeValue) {
+    this.service.issueOutputRequest(key, value);
   }
 
   subscribePrefixes(prefixes: Path[]): Observable<IdEndpointPrefixUpdate[]> {
@@ -61,6 +66,9 @@ export class EdgeConsumerService {
 
     let params = EdgeConsumer.subscriptionParamsForKeys(id, descriptor);
 
+    console.log("Sub params: ");
+    console.log(params);
+
     let obs = Observable.create(observer => {
       let sub = this.service.subscribeDataKeys(params, updates => {
         observer.next(updates)
@@ -95,7 +103,14 @@ export class EdgeConsumerService {
         } else if (keyDesc.typeDescriptor instanceof ActiveSetValueDescriptor) {
           activeSetDescs.push([endPath, keyDesc]);
         }
-      } else if (keyDesc instanceof OutputKeyDescriptor) {
+      }
+    });
+
+    descriptor.outputKeySet.items().forEach(item => {
+      console.log(item);
+      let keyDesc = item.item;
+      let endPath = new EndpointPath(id, item.path);
+      if (keyDesc instanceof OutputKeyDescriptor) {
         outputDescs.push([endPath, keyDesc])
       }
     });
@@ -119,7 +134,7 @@ export class EdgeConsumerService {
 
     let handle = (updates: IdKeyUpdate[]) => {
       updates.forEach(up => {
-        let table = tableMap.get(up.id.toStringKey())
+        let table = tableMap.get(up.id.toStringKey());
         if (!isNullOrUndefined(table)) {
           table.handle([up]);
         }

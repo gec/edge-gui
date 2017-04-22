@@ -1,8 +1,9 @@
 
 import { Observable } from "rxjs/Rx";
-import { EdgeValue } from "./edge-data"
-import { EndpointDescriptor, EndpointId, Path, EdgeModelParser } from "./edge-model";
+import { EdgeDataParser, EdgeValue } from "./edge-data"
+import { EndpointDescriptor, EndpointId, Path, EdgeModelParser, EndpointPath } from "./edge-model";
 import { EdgeConsumer, IdKeyUpdate, StatusType } from "./edge-consumer";
+import { isNullOrUndefined } from "util";
 
 
 export interface IdEndpointPrefixUpdate {
@@ -168,11 +169,17 @@ export class EdgeWebSocketService {
 
   private socket: WebSocket = null;
   private seq: number = 0;
+  private outputSeq: number = 0;
   private subscriptionMap = new Map<number, Subscription>();
 
   private getSeq(): number {
     let result = this.seq;
     this.seq += 1;
+    return result;
+  }
+  private getOutputSeq(): number {
+    let result = this.outputSeq;
+    this.outputSeq += 1;
     return result;
   }
 
@@ -225,6 +232,29 @@ export class EdgeWebSocketService {
     return new EdgeSubscriptionHandle(() => {
       this.removeSubscription(subSeq)
     });
+  }
+
+
+  issueOutputRequest(key: EndpointPath, value?: EdgeValue) {
+    let seq = this.getOutputSeq();
+
+    let request = {};
+    if (!isNullOrUndefined(value)) {
+      request = { output_value : EdgeDataParser.writeValue(value) }
+    }
+
+    let msg = {
+      output_requests: [
+        {
+          id: key,
+          request: request,
+          correlation: seq,
+        }
+      ]
+    };
+
+    let json = JSON.stringify(msg);
+    this.socket.send(json);
   }
 
   subscribePrefixes(paths: Path[], callback: (updates: any) => void): EdgeSubscriptionHandle {
@@ -300,17 +330,23 @@ export class EdgeWebSocketService {
       //console.log("parsed: ");
       //console.log(parsed);
 
-      for (let objKey in parsed.subscriptionNotification) {
-        //console.log(objKey);
-        let updateSet = parsed.subscriptionNotification[objKey];
-        let subKey = +objKey;
+      if (!isNullOrUndefined(parsed.subscriptionNotification)) {
+        for (let objKey in parsed.subscriptionNotification) {
+          //console.log(objKey);
+          let updateSet = parsed.subscriptionNotification[objKey];
+          let subKey = +objKey;
 
-        let subRecord = this.subscriptionMap.get(subKey);
-        if (subRecord && updateSet && updateSet.updates) {
-          subRecord.extractor.handle(updateSet.updates);
+          let subRecord = this.subscriptionMap.get(subKey);
+          if (subRecord && updateSet && updateSet.updates) {
+            subRecord.extractor.handle(updateSet.updates);
+          }
         }
       }
 
+      if (!isNullOrUndefined(parsed.output_responses)) {
+        console.log("GOT OUTPUT RESPONSES:");
+        console.log(parsed.output_responses);
+      }
     };
 
     ws.onerror = (err) => {

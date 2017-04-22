@@ -131,8 +131,6 @@ export class EdgeDataParser {
     }
   }
   static parseTaggedValue(v: any): TaggedValue | null {
-    console.log("parseTaggedValue");
-    console.log(v);
     if (!isNullOrUndefined(v) && !isNullOrUndefined(v.tag) && !isNullOrUndefined(v.value)) {
       let basicValue = this.parseValue(v.value);
       if (!isNullOrUndefined(basicValue) && typeof v.tag === 'string') {
@@ -141,6 +139,31 @@ export class EdgeDataParser {
         return null;
       }
     } else {
+      return null;
+    }
+  }
+
+  static writeValue(value: EdgeValue): any {
+    if (value instanceof StringValue) {
+      return { stringValue: value.value };
+    } else if (value instanceof SInt32Value) {
+      return { sint32Value: value.value };
+    } else if (value instanceof UInt32Value) {
+      return { uint32Value: value.value };
+    } else if (value instanceof SInt64Value) {
+      return { sint64Value: value.value };
+    } else if (value instanceof UInt64Value) {
+      return { uint64Value: value.value };
+    } else if (value instanceof BoolValue) {
+      return { boolValue: value.value };
+    } else if (value instanceof FloatValue) {
+      return { floatValue: value.value };
+    } else if (value instanceof DoubleValue) {
+      return { doubleValue: value.value };
+    } else if (value instanceof BytesValue) {
+      return { bytesValue: value.value };
+    } else {
+      console.log("UNHANDLED EDGE SERIALIZATION");
       return null;
     }
   }

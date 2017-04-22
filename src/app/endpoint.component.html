@@ -6,6 +6,12 @@
   <li role="presentation"><a href="#/endpointdesc?name={{name}}">Description</a></li>
 </ul>
 
+
+<div *ngIf="outputs">
+  <h3>Outputs</h3>
+  <outputs-table [states]="outputs"></outputs-table>
+</div>
+
 <div *ngIf="series">
   <h3>Time Series</h3>
   <series-table [states]="series"></series-table>

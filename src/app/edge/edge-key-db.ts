@@ -11,7 +11,7 @@ import {
   TopicEventUpdate
 } from "./edge-consumer";
 import { isNullOrUndefined } from "util";
-import { EdmCore, SeriesType } from "./edge-edm-core";
+import { EdmCore, OutputType, SeriesType } from "./edge-edm-core";
 import NumberFormat = Intl.NumberFormat;
 
 
@@ -48,11 +48,6 @@ export class EventValueArray {
   ) {}
 }
 
-export class OutputStatusStateValue {
-  constructor(
-    public readonly outputStats: OutputKeyStatus,
-  ) {}
-}
 
 type KeyValue = TimeSeriesValue | KeyValueValue | EventValueArray | OutputStatusStateValue
 
@@ -234,24 +229,42 @@ export class EventDb implements KeyDb {
   }
 }
 
+
+export class OutputStatusStateValue {
+  constructor(
+    public readonly outputStatus: OutputKeyStatus | null,
+    public readonly outputType: OutputType,
+  ) {}
+}
+
 export class OutputKeyDb implements KeyDb {
   constructor(
     private key: EndpointPath,
     metadata: PathMap<EdgeValue>,
-  ) {}
+  ) {
+    this.processMetadata(metadata);
+    this.current = new OutputStatusStateValue(null, this.outputType)
+  }
 
   private status: StatusType = "PENDING";
   private current?: OutputStatusStateValue = null;
+  private outputType: OutputType = "simple_indication";
+
+  private processMetadata(metadata: PathMap<EdgeValue>) {
+    this.outputType = EdmCore.readOutputType(metadata);
+    console.log("Output type");
+    console.log(this.outputType);
+  }
 
   handle(update: IdKeyUpdate): void {
+    console.log("Output key update: ");
+    console.log(update);
     this.status = update.statusType;
-    if (update.statusType === "RESOLVED_VALUE" && (update.constructor === IdOutputKeyUpdate)) {
-      let outputUpdate = update as IdOutputKeyUpdate;
+    if (update.statusType === "RESOLVED_VALUE" && update instanceof IdOutputKeyUpdate) {
+      this.status = update.statusType;
 
-      this.status = outputUpdate.statusType;
-
-      if (!isNullOrUndefined(outputUpdate.value)) {
-        this.current = new OutputStatusStateValue(outputUpdate.value.statusUpdate)
+      if (!isNullOrUndefined(update.value)) {
+        this.current = new OutputStatusStateValue(update.value.statusUpdate, this.outputType)
       }
     }
   }
@@ -288,6 +301,7 @@ export class EdgeKeyTable {
         this.map.set(id.toStringKey(), db)
       }
     });
+    this.updateCache();
   }
 
   private map = new Map<string, KeyDb>();
