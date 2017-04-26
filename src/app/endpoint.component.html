@@ -7,24 +7,24 @@
 </ul>
 
 
-<div *ngIf="outputs">
-  <h3>Outputs</h3>
-  <outputs-table [states]="outputs"></outputs-table>
-</div>
-
-<div *ngIf="series">
+<div *ngIf="series && series.length > 0">
   <h3>Time Series</h3>
   <series-table [states]="series"></series-table>
 </div>
 
-<div *ngIf="keyValues">
+<div *ngIf="outputs && outputs.length > 0">
+  <h3>Outputs</h3>
+  <outputs-table [states]="outputs"></outputs-table>
+</div>
+
+<div *ngIf="keyValues && keyValues.length > 0">
   <h3>Key Values</h3>
   <key-value-table [states]="keyValues"></key-value-table>
 </div>
 
-
-<div *ngIf="events">
+<div *ngIf="events && events.length > 0">
   <h3>Events</h3>
   <event-keys-table [states]="events"></event-keys-table>
   <!--<key-value-table [states]="keyValues"></key-value-table>-->
 </div>
+

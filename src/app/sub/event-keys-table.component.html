@@ -9,13 +9,13 @@
         <table *ngIf="state.value?.values?.length > 0" class="table">
           <tr>
             <th>Topic</th>
-            <th style="text-align: right">Value</th>
+            <th>Value</th>
             <th style="text-align: right">Time</th>
           </tr>
           <tbody>
           <tr *ngFor="let record of state.value?.values">
-            <td><edge-path [path]="record.topic"></edge-path></td>
-            <td>{{record.value}}</td>
+            <td style="text-align: left"><edge-path [path]="record.topic"></edge-path></td>
+            <td style="text-align: left"><event-tabular-value [value]="record.value"></event-tabular-value></td>
             <td>{{record.time | date:'HH:mm:ss yyyy-MM-dd'}}</td>
           </tr>
           </tbody>

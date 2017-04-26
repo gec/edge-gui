@@ -18,6 +18,7 @@ import { OutputsTableComponent } from "./sub/outputs-table.component";
 import { SetpointFormComponent } from "./item/setpoint-form.component";
 import { IndicationFormComponent } from "./item/indication-form.component";
 import { EnumSetpointFormComponent } from "./item/enum-setpoint-form.component";
+import {EventTabularValueComponent} from "./item/event-tabular-value.component";
 
 @NgModule({
   declarations: [
@@ -33,6 +34,7 @@ import { EnumSetpointFormComponent } from "./item/enum-setpoint-form.component";
     SetpointFormComponent,
     IndicationFormComponent,
     EnumSetpointFormComponent,
+    EventTabularValueComponent,
 
     EdgeValueComponent,
     EdgeValueScalarComponent,
