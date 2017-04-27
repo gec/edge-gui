@@ -1,12 +1,14 @@
 
 
 import {
+  ActiveSetValueDescriptor,
   DataKeyDescriptor, EndpointPath, EventTopicValueDescriptor, KeyDescriptor, LatestKeyValueDescriptor,
   OutputKeyDescriptor, Path, PathMap,
   TimeSeriesValueDescriptor
 } from "./edge-model";
-import { EdgeValue, SampleValue } from "./edge-data";
+import { EdgeValue, IndexableValue, SampleValue } from "./edge-data";
 import {
+  ActiveSetUpdate,
   IdDataKeyUpdate, IdKeyUpdate, IdOutputKeyUpdate, KeyType, KeyValueUpdate, OutputKeyStatus, SeriesUpdate, StatusType,
   TopicEventUpdate
 } from "./edge-consumer";
@@ -48,8 +50,21 @@ export class EventValueArray {
   ) {}
 }
 
+export class ActiveSetKv {
+  constructor(
+    public readonly key: IndexableValue,
+    public readonly value: EdgeValue
+  ) {}
+}
+export class ActiveSetValue {
+  constructor(
+    public readonly kvs: ActiveSetKv[],
+  ) {}
+}
 
-type KeyValue = TimeSeriesValue | KeyValueValue | EventValueArray | OutputStatusStateValue
+
+
+type KeyValue = TimeSeriesValue | KeyValueValue | EventValueArray | ActiveSetValue | OutputStatusStateValue
 
 export class KeyState {
   constructor(
@@ -229,6 +244,55 @@ export class EventDb implements KeyDb {
   }
 }
 
+export class ActiveSetValueDb implements KeyDb {
+  constructor(
+    private key: EndpointPath,
+    metadata: PathMap<EdgeValue>,
+    desc: ActiveSetValueDescriptor
+  ) {
+    this.processMetadata(metadata);
+  }
+
+  private status: StatusType = "PENDING";
+  private currentValue?: ActiveSetValue = null;
+  private cached: KeyState = new KeyState(this.key, this.status, "ActiveSet", this.currentValue);
+
+
+  private processMetadata(metadata: PathMap<EdgeValue>) {
+    //EdgeModelReader.seriesValueMapper(metadata)
+  }
+
+  private updateCache(): void {
+    this.cached = new KeyState(this.key, this.status, "KeyValue", this.currentValue);
+  }
+
+  handle(update: IdKeyUpdate): void {
+    this.status = update.statusType;
+    if (update.statusType === "RESOLVED_VALUE" && (update instanceof IdDataKeyUpdate)) {
+      if (!isNullOrUndefined(update.value) && update.value instanceof ActiveSetUpdate) {
+        let up = update.value;
+        if (!isNullOrUndefined(up.descriptorUpdate)) {
+          this.processMetadata(up.descriptorUpdate.metadata);
+        }
+
+        let kvs: ActiveSetKv[] = [];
+        up.value.forEach((v, k) => {
+          kvs.push(new ActiveSetKv(k, v));
+        });
+
+        this.currentValue = new ActiveSetValue(kvs.sort((l, r) => l.key.toStringKey().localeCompare(r.key.toStringKey())))
+        this.updateCache();
+      }
+    } else {
+      this.currentValue = null;
+      this.updateCache();
+    }
+  }
+
+  state(): KeyState {
+    return this.cached;
+  }
+}
 
 export class OutputStatusStateValue {
   constructor(
@@ -289,16 +353,16 @@ export class EdgeKeyTable {
       let keyDesc = tup[1];
       if (keyDesc instanceof DataKeyDescriptor) {
         if (keyDesc.typeDescriptor instanceof TimeSeriesValueDescriptor) {
-          let desc = keyDesc.typeDescriptor;
-          let db = new TimeSeriesDb(id, keyDesc.metadata, desc);
+          let db = new TimeSeriesDb(id, keyDesc.metadata, keyDesc.typeDescriptor);
           this.map.set(id.toStringKey(), db);
         } else if (keyDesc.typeDescriptor instanceof LatestKeyValueDescriptor) {
-          let desc = keyDesc.typeDescriptor;
-          let db = new KeyValueDb(id, keyDesc.metadata, desc);
+          let db = new KeyValueDb(id, keyDesc.metadata, keyDesc.typeDescriptor);
           this.map.set(id.toStringKey(), db);
         } else if (keyDesc.typeDescriptor instanceof EventTopicValueDescriptor) {
-          let desc = keyDesc.typeDescriptor;
-          let db = new EventDb(id, keyDesc.metadata, desc);
+          let db = new EventDb(id, keyDesc.metadata, keyDesc.typeDescriptor);
+          this.map.set(id.toStringKey(), db);
+        } else if (keyDesc.typeDescriptor instanceof ActiveSetValueDescriptor) {
+          let db = new ActiveSetValueDb(id, keyDesc.metadata, keyDesc.typeDescriptor);
           this.map.set(id.toStringKey(), db);
         }
       } else if (keyDesc instanceof OutputKeyDescriptor) {

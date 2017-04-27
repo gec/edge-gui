@@ -7,6 +7,10 @@
   <!--<li role="presentation"><a *ngIf="id" [routerLink]="['/endpointdesc', toKeyString(id?.toStringKey())]">Description</a></li>-->
 </ul>
 
+<div *ngIf="activeSets?.length > 0">
+  <h3>Active Sets</h3>
+  <active-sets-table [states]="activeSets"></active-sets-table>
+</div>
 
 <div *ngIf="series && series.length > 0">
   <h3>Time Series</h3>

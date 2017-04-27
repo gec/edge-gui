@@ -21,6 +21,8 @@ import { EnumSetpointFormComponent } from "./item/enum-setpoint-form.component";
 import {EventTabularValueComponent} from "./item/event-tabular-value.component";
 import { EndpointDescComponent } from "./endpoint-desc.component";
 import { MetadataDescTableComponent } from "./sub/metadata-desc-table.component";
+import { ActiveSetsTableComponent } from "./sub/active-sets-table.component";
+import { ActiveSetValueTableComponent } from "./item/active-set-value-table.component";
 
 @NgModule({
   declarations: [
@@ -32,6 +34,8 @@ import { MetadataDescTableComponent } from "./sub/metadata-desc-table.component"
     KeyValueTableComponent,
     EventKeysTableComponent,
     OutputsTableComponent,
+    ActiveSetsTableComponent,
+
 
     EdgePathComponent,
     SetpointFormComponent,
@@ -39,6 +43,7 @@ import { MetadataDescTableComponent } from "./sub/metadata-desc-table.component"
     EnumSetpointFormComponent,
     EventTabularValueComponent,
     MetadataDescTableComponent,
+    ActiveSetValueTableComponent,
 
     EdgeValueComponent,
     EdgeValueScalarComponent,

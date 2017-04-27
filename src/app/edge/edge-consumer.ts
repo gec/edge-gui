@@ -285,7 +285,7 @@ export class EdgeConsumer {
           if (!isNullOrUndefined(id) && !isNullOrUndefined(type)) {
             result.push(new IdDataKeyUpdate(id, type, value));
           } else {
-            console.log("UPDATE PARSE FAILED: ")
+            console.log("Update parse failed: ")
             console.log(v);
           }
         }

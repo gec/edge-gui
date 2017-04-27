@@ -1,6 +1,6 @@
 import {Component, Input} from "@angular/core";
 import {
-  BoolValue,
+  BoolValue, BytesValue,
   DoubleValue, EdgeValue, FloatValue, SInt32Value, SInt64Value, StringValue, UInt32Value,
   UInt64Value
 } from "../edge/edge-data";
@@ -12,10 +12,9 @@ import {
       <span *ngSwitchCase="'numeric'" class="edge-value-scalar edge-value-scalar-numeric">{{value.value}}</span>
       <span *ngSwitchCase="'string'" class="edge-value-scalar edge-value-scalar-string">"{{value.value}}"</span>
       <span *ngSwitchCase="'boolean'" class="edge-value-scalar edge-value-scalar-boolean">{{value.value}}</span>
+      <span *ngSwitchCase="'bytes'" class="edge-value-scalar edge-value-scalar-boolean"><em>[binary]</em></span>
+      <span *ngSwitchCase="'unknown'" class="edge-value-scalar edge-value-scalar-boolean"><em>[unrecognized]</em></span>
     </span>
-    <!--<div *ngIf="isNumeric()" class="edge-value-scalar edge-value-scalar-numeric">{{value.value}}</div>
-    <div *ngIf="isString()" class="edge-value-scalar edge-value-scalar-string">{{value.value}}</div>-->
-    
   `,
   styles: []
 })
@@ -29,6 +28,8 @@ export class EdgeValueScalarComponent {
       return "string";
     } else if (this.isBoolean()) {
       return "boolean";
+    } else if (this.isBytes()) {
+      return "bytes";
     } else {
       return "unknown";
     }
@@ -51,6 +52,10 @@ export class EdgeValueScalarComponent {
   isBoolean(): boolean  {
     let value = this.value;
     return value instanceof BoolValue;
+  }
+  isBytes(): boolean  {
+    let value = this.value;
+    return value instanceof BytesValue;
   }
 
 }

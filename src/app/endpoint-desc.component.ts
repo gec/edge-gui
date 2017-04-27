@@ -10,7 +10,7 @@ import {
   TimeSeriesValueDescriptor,
   TypeDescriptor
 } from "./edge/edge-model";
-import { DataKeyRecord, MetadataRecord, OutputKeyRecord } from "./record/descriptor-records";
+import { DataKeyRecord, PathValueRecord, OutputKeyRecord } from "./record/descriptor-records";
 import { EdgeValue } from "./edge/edge-data";
 
 @Component({
@@ -22,7 +22,7 @@ export class EndpointDescComponent implements OnInit {
   id: EndpointId = null;
   desc: EndpointDescriptor = null;
 
-  endpointMetadata: MetadataRecord[];
+  endpointMetadata: PathValueRecord[];
   dataKeys: DataKeyRecord[];
   outputKeys: OutputKeyRecord[];
 
@@ -66,9 +66,9 @@ export class EndpointDescComponent implements OnInit {
     })
   }
 
-  static metadataRecords(map: PathMap<EdgeValue>): MetadataRecord[] {
+  static metadataRecords(map: PathMap<EdgeValue>): PathValueRecord[] {
     return map.items()
-      .map(item => new MetadataRecord(item.path, item.item))
+      .map(item => new PathValueRecord(item.path, item.item))
       .sort((l, r) => {
         return l.path.toStringKey().localeCompare(r.path.toStringKey())
       });

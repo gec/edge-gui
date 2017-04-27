@@ -1,0 +1,36 @@
+
+
+<div class="table-responsive">
+  <table class="table">
+    <thead>
+    <tr>
+      <th>Name</th>
+      <th style="text-align: right">Value</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let state of states">
+      <td><edge-path [path]="state.key.key"></edge-path></td>
+      <td style="text-align: right">
+        <active-set-value-table [value]="state.value"></active-set-value-table>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+
+<div *ngIf="modalState">
+  <div class="modal fade" id="activeSetObjectModal" tabindex="-1" role="dialog" aria-labelledby="activeSetObjectModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title" id="keyValueObjectModalLabel"><edge-path [path]="modalState.key.endpointId.name"></edge-path> // <edge-path [path]="modalState.key.key"></edge-path></h4>
+        </div>
+        <div class="modal-body">
+          <edge-value [value]="modalState.value?.value"></edge-value>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

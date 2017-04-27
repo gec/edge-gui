@@ -66,9 +66,6 @@ export class EdgeConsumerService {
 
     let params = EdgeConsumer.subscriptionParamsForKeys(id, descriptor);
 
-    console.log("Sub params: ");
-    console.log(params);
-
     let obs = Observable.create(observer => {
       let sub = this.service.subscribeDataKeys(params, updates => {
         observer.next(updates)

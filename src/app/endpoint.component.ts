@@ -53,6 +53,8 @@ export class EndpointComponent implements OnInit {
       this.events = v.topicEvents.sort(sortStates);
       this.activeSets = v.activeSets.sort(sortStates);
       this.outputs = v.outputs.sort(sortStates);
+
+      console.log(this.activeSets);
     });
   }
 }
