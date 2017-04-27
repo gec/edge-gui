@@ -18,7 +18,10 @@ import {EdgeValue, ListValue, MapValue, TaggedValue} from "../edge/edge-data";
         <li *ngFor="let item of value.value"><edge-value [value]="item"></edge-value></li>
       </ul>
     </div>
-    <edge-value-scalar *ngIf="typeString(value) === 'scalar'" [value]="value"></edge-value-scalar>
+    <edge-value-scalar *ngIf="typeString(value) === 'scalar'" [value]="value" class="edge-value-block"></edge-value-scalar>
+    <!--<div *ngIf="typeString(value) === 'scalar'" class="edge-value-block edge-value-scalar">
+      <edge-value-scalar [value]="value"></edge-value-scalar>
+    </div>-->
   `,
   styles: [
     `

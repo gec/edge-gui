@@ -3,7 +3,8 @@
 </h1>
 <ul class="nav nav-tabs">
   <li role="presentation" class="active"><a href="#">Data</a></li>
-  <li role="presentation"><a href="#/endpointdesc?name={{name}}">Description</a></li>
+  <li role="presentation"><a [routerLink]="['/endpointdesc', id.toStringKey()]">Description</a></li>
+  <!--<li role="presentation"><a *ngIf="id" [routerLink]="['/endpointdesc', toKeyString(id?.toStringKey())]">Description</a></li>-->
 </ul>
 
 

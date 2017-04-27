@@ -57,8 +57,3 @@ export class EndpointComponent implements OnInit {
   }
 }
 
-
-/*
-
-
-*/

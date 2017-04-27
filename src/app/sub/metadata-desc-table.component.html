@@ -1,0 +1,18 @@
+<div class="table-responsive">
+  <table class="table">
+    <thead>
+    <tr>
+      <th>Key</th>
+      <th style="text-align: right">Value</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let item of metadata">
+      <td style="text-align: left"><edge-path [path]="item.path"></edge-path></td>
+      <td style="text-align: right">
+        <edge-value [value]="item.value"></edge-value>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>

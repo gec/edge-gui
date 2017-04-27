@@ -1,0 +1,78 @@
+<h1 class="page-header">
+  <edge-path [path]="id.name"></edge-path>
+</h1>
+<ul class="nav nav-tabs">
+  <li role="presentation"><a [routerLink]="['/endpoint', id.toStringKey()]">Data</a></li>
+  <li role="presentation" class="active"><a href="#">Description</a></li>
+</ul>
+
+<div *ngIf="endpointMetadata?.length > 0">
+  <h3>Endpoint metadata</h3>
+
+  <metadata-desc-table  [metadata]="endpointMetadata"></metadata-desc-table>
+  <!--<div class="table-responsive">
+    <table class="table">
+      &lt;!&ndash;<thead>
+      <tr>
+        <th>Key</th>
+        <th style="text-align: right">Value</th>
+      </tr>
+      </thead>&ndash;&gt;
+      <tbody>
+      <tr *ngFor="let item of endpointMetadata">
+        <td><edge-path [path]="item.path"></edge-path></td>
+        <td style="text-align: right"><edge-value [value]="item.value"></edge-value></td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+-->
+
+</div>
+
+
+<div *ngIf="dataKeys?.length > 0">
+  <h3>Data Keys</h3>
+  <div class="table-responsive">
+    <table class="table">
+      <!--<thead>
+      <tr>
+        <th>Key</th>
+        <th style="text-align: right">Value</th>
+      </tr>
+      </thead>-->
+      <tbody>
+      <tr *ngFor="let item of dataKeys">
+        <td><edge-path [path]="item.path"></edge-path></td>
+        <td>{{item.type}}</td>
+        <td style="text-align: right">
+          <metadata-desc-table *ngIf="item.metadata.length > 0" [metadata]="item.metadata"></metadata-desc-table>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<div *ngIf="outputKeys?.length > 0">
+  <h3>Output Keys</h3>
+  <div class="table-responsive">
+    <table class="table">
+      <!--<thead>
+      <tr>
+        <th>Key</th>
+        <th style="text-align: right">Value</th>
+      </tr>
+      </thead>-->
+      <tbody>
+      <tr *ngFor="let item of outputKeys">
+        <td><edge-path [path]="item.path"></edge-path></td>
+        <td style="text-align: right">
+          <metadata-desc-table *ngIf="item.metadata.length > 0" [metadata]="item.metadata"></metadata-desc-table>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

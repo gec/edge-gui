@@ -19,11 +19,14 @@ import { SetpointFormComponent } from "./item/setpoint-form.component";
 import { IndicationFormComponent } from "./item/indication-form.component";
 import { EnumSetpointFormComponent } from "./item/enum-setpoint-form.component";
 import {EventTabularValueComponent} from "./item/event-tabular-value.component";
+import { EndpointDescComponent } from "./endpoint-desc.component";
+import { MetadataDescTableComponent } from "./sub/metadata-desc-table.component";
 
 @NgModule({
   declarations: [
     AppComponent,
     EndpointComponent,
+    EndpointDescComponent,
 
     SeriesTableComponent,
     KeyValueTableComponent,
@@ -35,6 +38,7 @@ import {EventTabularValueComponent} from "./item/event-tabular-value.component";
     IndicationFormComponent,
     EnumSetpointFormComponent,
     EventTabularValueComponent,
+    MetadataDescTableComponent,
 
     EdgeValueComponent,
     EdgeValueScalarComponent,
