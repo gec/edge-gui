@@ -1,35 +1,45 @@
-<h1 class="page-header">
+<h1 class="page-header" [class.edge-page-pending]="pageState === 'uninit' || pageState === 'pending'">
     <edge-path [path]="id.name"></edge-path>
 </h1>
 <ul class="nav nav-tabs">
   <li role="presentation" class="active"><a href="#">Data</a></li>
   <li role="presentation"><a [routerLink]="['/endpointdesc', id.toStringKey()]">Description</a></li>
-  <!--<li role="presentation"><a *ngIf="id" [routerLink]="['/endpointdesc', toKeyString(id?.toStringKey())]">Description</a></li>-->
 </ul>
 
-<div *ngIf="activeSets?.length > 0">
-  <h3>Active Sets</h3>
-  <active-sets-table [states]="activeSets"></active-sets-table>
-</div>
+<!--<div [ngSwitch]="pageState">
+  <div *ngSwitchCase="'uninit'">pending</div>
+  <div *ngSwitchCase="'pending'">pending</div>
+  <div *ngSwitchCase="'described'">described</div>
+  <div *ngSwitchCase="'subscribed'">subscribed</div>
+</div>-->
 
-<div *ngIf="series && series.length > 0">
-  <h3>Time Series</h3>
-  <series-table [states]="series"></series-table>
-</div>
+<div *ngIf="pageState === 'described' || pageState === 'subscribed'">
 
-<div *ngIf="outputs && outputs.length > 0">
-  <h3>Outputs</h3>
-  <outputs-table [states]="outputs"></outputs-table>
-</div>
+  <div *ngIf="activeSets?.length > 0">
+    <h3>Active Sets</h3>
+    <active-sets-table [states]="activeSets"></active-sets-table>
+  </div>
 
-<div *ngIf="keyValues && keyValues.length > 0">
-  <h3>Key Values</h3>
-  <key-value-table [states]="keyValues"></key-value-table>
-</div>
+  <div *ngIf="series && series.length > 0">
+    <h3>Time Series</h3>
+    <series-table [states]="series"></series-table>
+  </div>
 
-<div *ngIf="events && events.length > 0">
-  <h3>Events</h3>
-  <event-keys-table [states]="events"></event-keys-table>
-  <!--<key-value-table [states]="keyValues"></key-value-table>-->
+  <div *ngIf="outputs && outputs.length > 0">
+    <h3>Outputs</h3>
+    <outputs-table [states]="outputs"></outputs-table>
+  </div>
+
+  <div *ngIf="keyValues && keyValues.length > 0">
+    <h3>Key Values</h3>
+    <key-value-table [states]="keyValues"></key-value-table>
+  </div>
+
+  <div *ngIf="events && events.length > 0">
+    <h3>Events</h3>
+    <event-keys-table [states]="events"></event-keys-table>
+    <!--<key-value-table [states]="keyValues"></key-value-table>-->
+  </div>
+
 </div>
 

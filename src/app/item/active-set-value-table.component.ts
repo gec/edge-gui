@@ -15,7 +15,7 @@ import { ActiveSetValue } from "../edge/edge-key-db";
         </tr>
         </thead>
         <tbody>
-        <tr *ngFor="let kv of value.kvs">
+        <tr *ngFor="let kv of value?.kvs">
           <td style="text-align: left"><edge-value [value]="kv.key"></edge-value></td>
           <td style="text-align: right">
             <edge-value [value]="kv.value"></edge-value>

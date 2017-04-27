@@ -75,3 +75,40 @@ div.value-panel h5 span {
   font-family: monospace;
 }
 
+.edge-key-pending {
+  /*border-left-style: solid;
+  border-left-width: 8px;
+  border-left-color: #f0ad4e;*/
+  background-color: #fcf8e3;
+  /*background-color: #fcf8e3;*/
+}
+
+.edge-key-resolved-value {
+  /*border-left-style: solid;
+  border-left-width: 8px;
+  border-left-color: #5cb85c;*/
+}
+
+.edge-page-pending {
+  font-style: italic;
+  color: grey;
+}
+
+.edge-sidebar-resolved-value {
+  border-left-style: solid;
+  border-left-width: 5px;
+  border-left-color: #337ab7;
+}
+.edge-sidebar-pending {
+  /*background-color: #fcf8e3;*/
+  border-left-style: solid;
+  border-left-width: 5px;
+  border-left-color: #f0ad4e;
+
+}
+.edge-sidebar-unresolved {
+  /*background-color: #f2dede;*/
+  border-left-style: solid;
+  border-left-width: 5px;
+  border-left-color: #d9534f;
+}

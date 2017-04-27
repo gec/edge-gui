@@ -6,15 +6,15 @@
     <th>Name</th>
     <th style="text-align: right">Value</th>
     <th>Unit</th>
-    <th>Time</th>
+    <th style="text-align: right">Time</th>
   </tr>
   </thead>
   <tbody>
-  <tr *ngFor="let state of states">
+  <tr *ngFor="let state of states" title="{{state.status}}" [class.edge-key-pending]="state.status === 'PENDING'" [class.edge-key-resolved-value]="state.status === 'RESOLVED_VALUE'" [class.edge-key-resolved-absent]="state.status === 'RESOLVED_ABSENT'" [class.edge-key-unresolved]="state.status === 'DATA_UNRESOLVED'" [class.edge-key-disconnected]="state.status === 'DISCONNECTED'">
     <td><edge-path [path]="state.key.key"></edge-path></td>
     <td style="text-align: right">{{state.value?.renderValue}}</td>
     <td>{{state.value?.unit}}</td>
-    <td>{{state.value?.date | date:'HH:mm:ss yyyy-MM-dd'}}</td>
+    <td style="text-align: right">{{state.value?.date | date:'HH:mm:ss yyyy-MM-dd'}}</td>
   </tr>
   </tbody>
 </table>

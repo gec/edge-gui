@@ -24,7 +24,7 @@
 <div class="container-fluid">
 
   <div class="row">
-    <div class="col-md-3 sidebar">
+    <div class="col-md-3 sidebar" title="{{statusType}}" [class.edge-sidebar-pending]="statusType === 'PENDING'" [class.edge-sidebar-resolved-value]="statusType === 'RESOLVED_VALUE'" [class.edge-sidebar-resolved-absent]="statusType === 'RESOLVED_ABSENT'" [class.edge-sidebar-unresolved]="statusType === 'DATA_UNRESOLVED'" [class.edge-sidebar-disconnected]="statusType === 'DISCONNECTED'">
       <ul class="nav nav-sidebar">
         <li *ngFor="let endpoint of endpoints">
           <a [routerLink]="['/endpoint', toKeyString(endpoint.name)]">

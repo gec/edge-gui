@@ -8,7 +8,7 @@
     </tr>
     </thead>
     <tbody>
-    <tr *ngFor="let state of states">
+    <tr *ngFor="let state of states" title="{{state.status}}" [class.edge-key-pending]="state.status === 'PENDING'" [class.edge-key-resolved-value]="state.status === 'RESOLVED_VALUE'" [class.edge-key-resolved-absent]="state.status === 'RESOLVED_ABSENT'" [class.edge-key-unresolved]="state.status === 'DATA_UNRESOLVED'" [class.edge-key-disconnected]="state.status === 'DISCONNECTED'">
       <td><edge-path [path]="state.key.key"></edge-path></td>
       <td [ngSwitch]="state.value?.outputType" style="text-align: right">
         <div *ngSwitchCase="'simple_indication'">

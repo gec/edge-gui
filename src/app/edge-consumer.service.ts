@@ -77,7 +77,7 @@ export class EdgeConsumerService {
   }
 
 
-  typedTabular(id: EndpointId, descriptor: EndpointDescriptor): Observable<TypedStates> {
+  typedTabular(id: EndpointId, descriptor: EndpointDescriptor): [TypedStates, Observable<TypedStates>] {
     this.checkStart();
 
     let seriesDescs: [EndpointPath, KeyDescriptor][] = [];
@@ -143,7 +143,7 @@ export class EdgeConsumerService {
     // TODO: subscribe by [EndpointPath, KeyDescriptor][]
     // TODO: original, pending update
 
-    return this.subscribeEndpointKeys(id, descriptor).map(v => handle(v));
+    return [getState(), this.subscribeEndpointKeys(id, descriptor).map(v => handle(v))];
 
     /*console.log("going to return???");
     return Observable.create(obs => {
