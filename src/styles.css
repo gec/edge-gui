@@ -112,3 +112,12 @@ div.value-panel h5 span {
   border-left-width: 5px;
   border-left-color: #d9534f;
 }
+
+ul.nav-sidebar li {
+ /* background-color: #616161;
+  margin: 1px;*/
+}
+
+ul.nav-sidebar li a {
+  /*color: #e0e0e0;*/
+}
