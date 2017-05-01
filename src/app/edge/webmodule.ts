@@ -6,18 +6,6 @@ import { EdgeConsumer, IdKeyUpdate, StatusType } from "./edge-consumer";
 import { isNullOrUndefined } from "util";
 
 
-export interface IdEndpointPrefixUpdate {
-  id: Path;
-  type: StatusType;
-  value: EndpointSetUpdate;
-}
-
-export interface EndpointSetUpdate {
-  value: EndpointId[];
-  removes: EndpointId[];
-  adds: EndpointId[];
-}
-
 interface SubscriptionExtractor {
   handle(updates: any): void
 }
@@ -26,7 +14,6 @@ class EndpointPrefixSubExtractor implements SubscriptionExtractor {
   constructor(private callback: (updates: any) => void) {}
 
   handle(updates: any): void {
-    console.log(updates);
     let typedUpdates = updates.reduce((accum, v) => {
       if (v.endpointPrefixUpdate) {
         accum.push(v.endpointPrefixUpdate)
@@ -34,8 +21,10 @@ class EndpointPrefixSubExtractor implements SubscriptionExtractor {
       return accum;
     }, []);
 
-    if (typedUpdates.length > 0) {
-      this.callback(typedUpdates)
+    let parsed = EdgeConsumer.parseEndpointPrefixUpdates(typedUpdates);
+
+    if (parsed.length > 0) {
+      this.callback(parsed);
     }
   }
 }

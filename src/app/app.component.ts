@@ -24,7 +24,7 @@ export class AppComponent implements OnInit {
           console.log(last);
           this.statusType = last.type;
           if (!isNullOrUndefined(last.value)) {
-            this.endpoints = last.value.value;
+            this.endpoints = last.value.value.sort((l, r) => l.toStringKey().localeCompare(r.toStringKey()));
           } else {
             this.endpoints = [];
           }

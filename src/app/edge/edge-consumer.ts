@@ -86,6 +86,23 @@ export class ActiveSetUpdate implements DataKeyValueUpdate {
 
 //export type DataKeyValueUpdate = SeriesUpdate | KeyValueUpdate | TopicEventUpdate | ActiveSetUpdate
 
+export class EndpointSetUpdate {
+  constructor(
+    public readonly value: EndpointId[],
+    public readonly removes: EndpointId[],
+    public readonly adds: EndpointId[],
+  ) {}
+}
+
+export class IdEndpointPrefixUpdate {
+  constructor(
+    public readonly id: Path,
+    public readonly type: StatusType,
+    public readonly value: EndpointSetUpdate,
+  ) {}
+}
+
+
 enum IdUpdateType {
   DataKey,
   OutputKey
@@ -294,5 +311,49 @@ export class EdgeConsumer {
 
     return result;
   }
-}
 
+  static parseEndpointPrefixUpdates(updates: any): IdEndpointPrefixUpdate[] {
+
+    let results: IdEndpointPrefixUpdate[] = [];
+    updates.forEach(v => {
+      let parsedPath: Path = null;
+      if (!isNullOrUndefined(v.id)) {
+        parsedPath = EdgeModelParser.parsePath(v.id);
+        if (isNullOrUndefined(parsedPath)) {
+          parsedPath = new Path([])
+        }
+      }
+      let type: StatusType = v.type;
+
+      let value: EndpointSetUpdate = null;
+      if (!isNullOrUndefined(v.value)) {
+        let setUpdate = v.value;
+        let current: EndpointId[] = [];
+        let removes: EndpointId[] = [];
+        let adds: EndpointId[] = [];
+
+        let parseSet = (field: any, target: EndpointId[]) => {
+          if (!isNullOrUndefined(field)) {
+            field.forEach(endId => {
+              let parsed = EdgeModelParser.parseEndpointId(endId);
+              if (!isNullOrUndefined(parsed)) {
+                current.push(parsed);
+              }
+            })
+          }
+        };
+
+        parseSet(setUpdate.value, current);
+        parseSet(setUpdate.removes, removes);
+        parseSet(setUpdate.adds, adds);
+
+        value = new EndpointSetUpdate(current, removes, adds);
+      }
+
+      if (!isNullOrUndefined(parsedPath) && !isNullOrUndefined(type) && typeof type === 'string') {
+        results.push(new IdEndpointPrefixUpdate(parsedPath, type, value))
+      }
+    });
+    return results;
+  }
+}

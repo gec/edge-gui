@@ -1,6 +1,6 @@
 
 import { Injectable, OnInit } from "@angular/core";
-import { EdgeWebSocketService, IdEndpointPrefixUpdate } from "./edge/webmodule";
+import { EdgeWebSocketService } from "./edge/webmodule";
 import { Observable } from "rxjs/Observable";
 import {
   ActiveSetValueDescriptor,
@@ -9,7 +9,7 @@ import {
   OutputKeyDescriptor, Path,
   TimeSeriesValueDescriptor
 } from "./edge/edge-model";
-import { EdgeConsumer, IdKeyUpdate } from "./edge/edge-consumer";
+import {EdgeConsumer, IdEndpointPrefixUpdate, IdKeyUpdate} from "./edge/edge-consumer";
 import { EdgeKeyTable, KeyState } from "./edge/edge-key-db";
 import { isNullOrUndefined } from "util";
 import { EdgeValue } from "./edge/edge-data";
