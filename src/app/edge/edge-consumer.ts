@@ -314,6 +314,9 @@ export class EdgeConsumer {
 
   static parseEndpointPrefixUpdates(updates: any): IdEndpointPrefixUpdate[] {
 
+    console.log("parseEndpointPrefixUpdates: ");
+    console.log(updates);
+
     let results: IdEndpointPrefixUpdate[] = [];
     updates.forEach(v => {
       let parsedPath: Path = null;
@@ -337,7 +340,7 @@ export class EdgeConsumer {
             field.forEach(endId => {
               let parsed = EdgeModelParser.parseEndpointId(endId);
               if (!isNullOrUndefined(parsed)) {
-                current.push(parsed);
+                target.push(parsed);
               }
             })
           }
@@ -354,6 +357,8 @@ export class EdgeConsumer {
         results.push(new IdEndpointPrefixUpdate(parsedPath, type, value))
       }
     });
+
+    console.log(results);
     return results;
   }
 }
