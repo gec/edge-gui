@@ -16,7 +16,8 @@
           <tr *ngFor="let record of state.value?.values">
             <td style="text-align: left"><edge-path [path]="record.topic"></edge-path></td>
             <td style="text-align: left"><event-tabular-value [value]="record.value"></event-tabular-value></td>
-            <td>{{record.time | date:'HH:mm:ss yyyy-MM-dd'}}</td>
+            <!--<td>{{record.time | date:'HH:mm:ss yyyy-MM-dd'}}</td>-->
+            <td style="text-align: right">{{record.time}}</td>
           </tr>
           </tbody>
         </table>

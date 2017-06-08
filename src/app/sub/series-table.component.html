@@ -14,7 +14,8 @@
     <td><edge-path [path]="state.key.key"></edge-path></td>
     <td style="text-align: right">{{state.value?.renderValue}}</td>
     <td>{{state.value?.unit}}</td>
-    <td style="text-align: right">{{state.value?.date | date:'HH:mm:ss yyyy-MM-dd'}}</td>
+    <!--<td style="text-align: right">{{state.value?.date | date:'HH:mm:ss yyyy-MM-dd'}}</td>-->
+    <td style="text-align: right">{{state.value?.date}}</td>
   </tr>
   </tbody>
 </table>
