@@ -163,36 +163,20 @@ export class EdgeConsumer {
 
   static subscriptionParamsForKeys(endpointId: EndpointId, descriptor: EndpointDescriptor): any {
 
-    let series: EndpointPath[] = [];
-    let keyValues: EndpointPath[] = [];
-    let topicEvents: EndpointPath[] = [];
-    let activeSets: EndpointPath[] = [];
-
+    let dataKeys: EndpointPath[] = [];
     let outputs: EndpointPath[] = [];
 
     descriptor.dataKeySet.items().forEach(v => {
       let key = v.path;
-      let desc = v.item;
-      switch (desc.typeDescriptor.constructor) {
-        case TimeSeriesValueDescriptor: series.push(new EndpointPath(endpointId, key)); break;
-        case LatestKeyValueDescriptor: keyValues.push(new EndpointPath(endpointId, key)); break;
-        case EventTopicValueDescriptor: topicEvents.push(new EndpointPath(endpointId, key)); break;
-        case ActiveSetValueDescriptor: activeSets.push(new EndpointPath(endpointId, key)); break;
-      }
+      dataKeys.push(new EndpointPath(endpointId, key));
     });
     descriptor.outputKeySet.items().forEach(v => {
       let key = v.path;
-      outputs.push(new EndpointPath(endpointId, key))
+      outputs.push(new EndpointPath(endpointId, key));
     });
 
-
     return {
-      data_params: {
-        series: series,
-        key_values: keyValues,
-        topic_events: topicEvents,
-        active_sets: activeSets
-      },
+      data_keys: dataKeys,
       output_keys: outputs,
     };
   }

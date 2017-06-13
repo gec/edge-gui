@@ -175,9 +175,7 @@ export class EdgeWebSocketService {
     let extractor = new EndpointPrefixSubExtractor(callback);
 
     let params = {
-      index_params: {
-        endpoint_prefixes: paths
-      }
+      endpoint_prefix_set: paths
     };
 
     return this.subscribe(extractor, params);
@@ -188,7 +186,7 @@ export class EdgeWebSocketService {
     let extractor = new EndpointDescSubExtractor(id, callback);
 
     let params = {
-      descriptors: [id]
+      endpoint_descriptors: [id]
     };
 
     return this.subscribe(extractor, params);
