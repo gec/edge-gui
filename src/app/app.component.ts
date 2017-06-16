@@ -10,12 +10,14 @@ import {StatusType} from "./edge/edge-consumer";
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
+  uri: string = "ws://127.0.0.1:8080/socket";
   endpoints: EndpointId[] = [];
   statusType: StatusType = "PENDING";
 
   constructor(private service: EdgeConsumerService) {}
 
   ngOnInit(): void {
+    this.service.setUri(this.uri);
     this.service.subscribePrefixes([new Path([])])
       .forEach(updates => {
         if (updates.length > 0) {

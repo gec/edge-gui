@@ -20,7 +20,12 @@ export class EdgeConsumerService {
 
   private started = false;
   //private service = new EdgeWebSocketService("ws://10.10.200.76:8080/socket");
-  private service = new EdgeWebSocketService("ws://127.0.0.1:8080/socket");
+  /*private service = new EdgeWebSocketService("ws://127.0.0.1:8080/socket");*/
+  private service = new EdgeWebSocketService();
+
+  setUri(uri: string) {
+    this.service.setUri(uri);
+  }
 
   private checkStart() {
     if (!this.started) {

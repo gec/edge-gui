@@ -80,6 +80,7 @@ export class EdgeSubscriptionHandle {
 
 export class EdgeWebSocketService {
 
+  private uri: string = null;
   private socket: WebSocket = null;
   private seq: number = 0;
   private outputSeq: number = 0;
@@ -96,7 +97,16 @@ export class EdgeWebSocketService {
     return result;
   }
 
-  constructor(private uri: string) {}
+  constructor() {}
+
+  setUri(uri: string): void {
+    console.log("uri: " + this.uri);
+    if (this.socket != null) {
+      this.socket.close();
+    }
+    this.uri = uri;
+    this.doConnect()
+  }
 
   start(): void {
     this.check();
@@ -106,7 +116,7 @@ export class EdgeWebSocketService {
   }
 
   private check(): void {
-    if (this.socket == null) {
+    if (this.socket == null && this.uri != null) {
       this.doConnect();
     }
   }
