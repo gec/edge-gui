@@ -243,13 +243,9 @@ export class EdgeWebSocketService {
 
     ws.onmessage = (message) => {
 
-      let json = JSON.parse(message.data);
-      //console.log("JSON: " + json);
-      //console.log(json);
-
-      let parsed = json; //as ServerToClientMessage;
-      //console.log("parsed: ");
-      //console.log(parsed);
+      let parsed = JSON.parse(message.data);
+      // console.log("JSON: " + parsed);
+      // console.log(parsed);
 
       if (!isNullOrUndefined(parsed.subscriptionNotification)) {
         for (let objKey in parsed.subscriptionNotification) {

@@ -328,6 +328,7 @@ export class OutputKeyDb implements KeyDb {
   }
 
   handle(update: IdKeyUpdate): void {
+    console.log("GOT OUTPUT UPDATE: " + update);
     this.status = update.statusType;
     if (update.statusType === "RESOLVED_VALUE" && update instanceof IdOutputKeyUpdate) {
       this.status = update.statusType;
@@ -391,7 +392,10 @@ export class EdgeKeyTable {
   handle(updates: IdKeyUpdate[]): void {
     let dirty = false;
     updates.forEach(v => {
-      if (v instanceof IdDataKeyUpdate) {
+      //if (v instanceof IdDataKeyUpdate) {
+      if (v instanceof IdOutputKeyUpdate) {
+        console.log("OUTPUT KEY UPDATE!!!");
+      }
         let up = v;
         let db = this.map.get(up.id.toStringKey());
         //console.log(db);
@@ -399,7 +403,7 @@ export class EdgeKeyTable {
           db.handle(up);
           dirty = true;
         }
-      }
+      //}
     });
     if (dirty) {
       this.updateCache();

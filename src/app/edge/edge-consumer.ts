@@ -272,6 +272,8 @@ export class EdgeConsumer {
 
     let result: IdKeyUpdate[] = [];
 
+    //console.log(updates);
+
     updates.forEach(v => {
       if (!isNullOrUndefined(v.dataKeyUpdate)) {
         let update = v.dataKeyUpdate;
@@ -290,16 +292,32 @@ export class EdgeConsumer {
             console.log(v);
           }
         }
-      }
+      } /*else if (!isNullOrUndefined(v.outputKeyUpdate)) {
+        let update = v.outputKeyUpdate;
+
+        if (!isNullOrUndefined(update.id) && !isNullOrUndefined(update.type) && typeof update.type === 'string') {
+          let id = EdgeModelParser.parseEndpointPath(update.id);
+          let type = update.type;
+          let value: OutputKeyUpdate | null = null;
+          if (!isNullOrUndefined(update.value)) {
+            value = this.parseUpdateValue(update.value);
+          }
+          if (!isNullOrUndefined(id) && !isNullOrUndefined(type)) {
+            result.push(new IdDataKeyUpdate(id, type, value));
+          } else {
+            console.log("Update parse failed: ")
+            console.log(v);
+          }
+        }
+      }*/
     });
+
+    //console.log(result);
 
     return result;
   }
 
   static parseEndpointPrefixUpdates(updates: any): IdEndpointPrefixUpdate[] {
-
-    console.log("parseEndpointPrefixUpdates: ");
-    console.log(updates);
 
     let results: IdEndpointPrefixUpdate[] = [];
     updates.forEach(v => {

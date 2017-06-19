@@ -151,17 +151,6 @@ export class EdgeConsumerService {
 
     return [getState(), this.subscribeEndpointKeys(id, descriptor).map(v => handle(v))];
 
-    /*console.log("going to return???");
-    return Observable.create(obs => {
-      console.log("Creating???");
-      obs.next(getState())
-      return () => {};
-    }).switch(this.subscribeEndpointKeys(id, descriptor))
-      .map(keyUpdates => {
-        console.log("GOT KEY UPDATES: ");
-        console.log(keyUpdates);
-        return handle(keyUpdates);
-      });*/
   }
 }
 

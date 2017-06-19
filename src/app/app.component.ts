@@ -58,8 +58,6 @@ export class AppComponent implements OnInit {
       .forEach(updates => {
         if (updates.length > 0) {
           let last = updates[updates.length - 1];
-          console.log("endpoint prefix result: ");
-          console.log(last);
           this.statusType = last.type;
           if (!isNullOrUndefined(last.value)) {
             this.endpoints = last.value.value.sort((l, r) => l.toStringKey().localeCompare(r.toStringKey()));
