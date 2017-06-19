@@ -72,7 +72,7 @@ export class EdmCore {
             results.push([v.value, key.value]);
           }
         });
-        return results;
+        return results.sort((l, r) => l[0].localeCompare(r[0]));
       } else {
         return null;
       }

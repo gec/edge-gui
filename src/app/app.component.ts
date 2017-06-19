@@ -10,14 +10,50 @@ import {StatusType} from "./edge/edge-consumer";
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
-  uri: string = "ws://127.0.0.1:8080/socket";
+  inputHost: string = "127.0.0.1";
+  inputPort: number = 8080;
+  inputSsl: boolean = false;
+
+  host: string = "127.0.0.1";
+  port: number = 8080;
+  ssl: boolean = false;
+
   endpoints: EndpointId[] = [];
   statusType: StatusType = "PENDING";
 
   constructor(private service: EdgeConsumerService) {}
 
+  setUri() {
+    let uri: string = "";
+    if (this.ssl) {
+      uri += "wss://"
+    } else {
+      uri += "ws://"
+    }
+    uri += this.host;
+    uri += ":";
+    uri += this.port;
+    uri += "/socket";
+    console.log("uri: " + uri);
+    this.service.setUri(uri);
+  }
+
+  addressApply() {
+    console.log("APPLIED: " + this.inputHost + ", " + this.inputPort + ", " + this.inputSsl);
+    this.host = this.inputHost;
+    this.port = this.inputPort;
+    this.ssl = this.inputSsl;
+    this.setUri();
+  }
+  addressCancel() {
+    console.log("CANCELED");
+    this.inputHost = this.host;
+    this.inputPort = this.port
+    this.inputSsl = this.ssl;
+  }
+
   ngOnInit(): void {
-    this.service.setUri(this.uri);
+    this.setUri();
     this.service.subscribePrefixes([new Path([])])
       .forEach(updates => {
         if (updates.length > 0) {

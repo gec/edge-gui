@@ -12,7 +12,7 @@
     </div>
     <div id="navbar" class="collapse navbar-collapse">
         <ul class="nav navbar-nav navbar-right">
-            <li><a href="#contact">{{uri}}</a></li>&ndash;&gt;
+            <li><a href="#" data-toggle="modal" data-target="#addressModal">{{host}}:{{port}}</a></li>
         </ul>
     </div><!--/.nav-collapse -->
   </div>
@@ -43,3 +43,48 @@
     </div>
   </div>
 </div>
+
+<div>
+  <div class="modal fade" id="addressModal" tabindex="-1" role="dialog" aria-labelledby="addressModalLabel">
+    <div class="modal-dialog modal-md" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <!--<h4 class="modal-title" id="keyValueObjectModalLabel"><edge-path [path]="modalState.key.endpointId.name"></edge-path> // <edge-path [path]="modalState.key.key"></edge-path></h4>-->
+        </div>
+        <div class="modal-body">
+          <form class="form-horizontal">
+            <div class="form-group">
+              <label for="hostInput" class="col-sm-2 control-label">Address</label>
+              <div class="col-sm-4">
+                <input type="text" class="form-control" id="hostInput" name="hostInput" [(ngModel)]="inputHost">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="hostPort" class="col-sm-2 control-label">Port</label>
+              <div class="col-sm-3">
+                <input type="number" class="form-control" id="hostPort" name="portInput" [(ngModel)]="inputPort">
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="col-sm-offset-2 col-sm-4">
+                <div class="checkbox">
+                  <label>
+                    <input type="checkbox" [(checked)]="inputSsl" (change)="inputSsl = !inputSsl"> SSL
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="col-sm-offset-2 col-sm-10">
+                <button type="submit" class="btn btn-primary" data-dismiss="modal" aria-label="Apply" (click)="addressApply()">Apply</button>
+                <button type="submit" class="btn btn-default" data-dismiss="modal" aria-label="Cancel" (click)="addressCancel()">Cancel</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
