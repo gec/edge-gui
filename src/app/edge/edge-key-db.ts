@@ -391,14 +391,12 @@ export class EdgeKeyTable {
   handle(updates: IdKeyUpdate[]): void {
     let dirty = false;
     updates.forEach(v => {
-      if (v instanceof IdDataKeyUpdate) {
-        let up = v;
-        let db = this.map.get(up.id.toStringKey());
-        //console.log(db);
-        if (!isNullOrUndefined(db)) {
-          db.handle(up);
-          dirty = true;
-        }
+      let up = v;
+      let db = this.map.get(up.id.toStringKey());
+      //console.log(db);
+      if (!isNullOrUndefined(db)) {
+        db.handle(up);
+        dirty = true;
       }
     });
     if (dirty) {

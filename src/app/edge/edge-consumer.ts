@@ -199,6 +199,36 @@ export class EdgeConsumer {
     return result;
   }
 
+  static parseOutputUpdate(pjson: any): OutputKeyUpdate {
+    let desc: OutputKeyDescriptor | null = null;
+    if (!isNullOrUndefined(pjson.descriptorUpdate)) {
+      desc = EdgeModelParser.parseOutputKeyDescriptor(pjson.descriptorUpdate);
+    }
+    let statusUpdate: OutputKeyStatus;
+    if (!isNullOrUndefined(pjson.statusUpdate)) {
+      let sequenceSession;
+      let sequence: number | null;
+      let value: EdgeValue | null;
+
+      if (!isNullOrUndefined(pjson.statusUpdate.sequence_session)) {
+
+      }
+      if (!isNullOrUndefined(pjson.statusUpdate.sequence)) {
+        sequence = +pjson.statusUpdate.sequence
+      }
+      if (!isNullOrUndefined(pjson.statusUpdate.value)) {
+        value = EdgeDataParser.parseValue(pjson.statusUpdate.value)
+      }
+
+      console.log("Status update: ");
+      console.log(pjson.statusUpdate);
+
+      statusUpdate = new OutputKeyStatus(sequenceSession, sequence, value)
+    }
+
+    return new OutputKeyUpdate(statusUpdate, desc);
+  }
+
   static parseUpdateValue(pjson: any): DataKeyValueUpdate {
 
     let desc: DataKeyDescriptor | null = null;
@@ -272,6 +302,8 @@ export class EdgeConsumer {
 
     let result: IdKeyUpdate[] = [];
 
+    //console.log(updates);
+
     updates.forEach(v => {
       if (!isNullOrUndefined(v.dataKeyUpdate)) {
         let update = v.dataKeyUpdate;
@@ -290,6 +322,23 @@ export class EdgeConsumer {
             console.log(v);
           }
         }
+      } else if (!isNullOrUndefined(v.outputKeyUpdate)) {
+        let update = v.outputKeyUpdate;
+
+        if (!isNullOrUndefined(update.id) && !isNullOrUndefined(update.type) && typeof update.type === 'string') {
+          let id = EdgeModelParser.parseEndpointPath(update.id);
+          let type = update.type;
+          let value: OutputKeyUpdate | null = null;
+          if (!isNullOrUndefined(update.value)) {
+            value = this.parseOutputUpdate(update.value);
+          }
+          if (!isNullOrUndefined(id) && !isNullOrUndefined(type)) {
+            result.push(new IdOutputKeyUpdate(id, type, value));
+          } else {
+            console.log("Update parse failed: ")
+            console.log(v);
+          }
+        }
       }
     });
 
@@ -297,9 +346,6 @@ export class EdgeConsumer {
   }
 
   static parseEndpointPrefixUpdates(updates: any): IdEndpointPrefixUpdate[] {
-
-    console.log("parseEndpointPrefixUpdates: ");
-    console.log(updates);
 
     let results: IdEndpointPrefixUpdate[] = [];
     updates.forEach(v => {
